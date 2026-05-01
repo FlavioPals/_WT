@@ -4,16 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-
-export interface Project {
-  id: string
-  slug: string
-  title: string
-  year: number
-  category: string
-  imageUrl?: string
-  gradient: string
-}
+import type { Project } from '@/lib/projects'
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 

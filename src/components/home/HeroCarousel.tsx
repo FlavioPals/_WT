@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -9,6 +10,7 @@ export interface HeroSlide {
   id: string
   title: string
   imageUrl: string
+  href?: string
   /** Tailwind gradient fallback while image loads */
   gradient?: string
 }
@@ -80,9 +82,17 @@ export function HeroCarousel({ slides }: Props) {
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/20" />
 
+      {slides[current]?.href && (
+        <Link
+          href={slides[current].href}
+          className="absolute inset-0 z-10"
+          aria-label={`Ver projeto: ${slides[current].title}`}
+        />
+      )}
+
       {/* Dot indicators */}
       <div
-        className="absolute right-6 bottom-10 flex gap-2 lg:right-20"
+        className="absolute right-6 bottom-10 z-20 flex gap-2 lg:right-20"
         role="tablist"
         aria-label="Selecionar projeto"
       >

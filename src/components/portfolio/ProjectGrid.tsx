@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { ProjectCard, cardVariants, type Project } from './ProjectCard'
+import type { Project } from '@/lib/projects'
+import { ProjectCard, cardVariants } from './ProjectCard'
 
 const containerVariants = {
   hidden: {},
