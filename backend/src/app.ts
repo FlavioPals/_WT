@@ -4,7 +4,9 @@ import express, { Application } from 'express'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 import pinoHttp from 'pino-http'
+import swaggerUi from 'swagger-ui-express'
 import { env } from './config/env'
+import { swaggerSpec } from './config/swagger'
 import { logger } from './lib/logger'
 import { errorMiddleware } from './middlewares/error.middleware'
 import { notFoundMiddleware } from './middlewares/not-found.middleware'
@@ -44,6 +46,11 @@ export function createApp(): Application {
   app.use(globalRateLimit)
 
   app.use('/api/v1', router)
+
+  if (env.NODE_ENV !== 'production') {
+    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+    logger.info(`Docs: ${env.API_URL}/api/v1/docs`)
+  }
 
   app.use(notFoundMiddleware)
   app.use(errorMiddleware)
