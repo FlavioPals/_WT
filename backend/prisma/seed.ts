@@ -12,6 +12,7 @@ const SITE_CONTENT_DEFAULTS: Array<{
   label: string
   type: SiteContentType
   group: string
+  description?: string
 }> = [
   {
     key: 'home_manifesto_title',
@@ -29,12 +30,36 @@ const SITE_CONTENT_DEFAULTS: Array<{
     group: 'home',
   },
   {
+    key: 'home_hero_image',
+    value: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+    label: 'Home - Imagem principal',
+    type: SiteContentType.IMAGE,
+    group: 'home',
+    description: 'Imagem solta da home gerenciavel pela biblioteca de midia.',
+  },
+  {
     key: 'about_intro',
     value:
       'Somos um escritório de arquitetura comprometido com projetos residenciais, corporativos e de interiores que equilibram funcionalidade, estética e identidade.',
     label: 'Sobre — Introdução',
     type: SiteContentType.RICH_TEXT,
     group: 'about',
+  },
+  {
+    key: 'about_cover_image',
+    value: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+    label: 'Sobre - Imagem institucional',
+    type: SiteContentType.IMAGE,
+    group: 'about',
+    description: 'Imagem institucional solta da pagina Sobre.',
+  },
+  {
+    key: 'about_services',
+    value: 'Residencial, Corporativo, Interiores, Retrofit',
+    label: 'Sobre - Areas de atuacao',
+    type: SiteContentType.TEXT,
+    group: 'about',
+    description: 'Lista textual das areas de atuacao exibidas no site.',
   },
   {
     key: 'about_stats_founded',
@@ -58,6 +83,14 @@ const SITE_CONTENT_DEFAULTS: Array<{
     group: 'about',
   },
   {
+    key: 'portfolio_intro',
+    value: 'Projetos selecionados que revelam nossa forma de pensar espaco, luz e permanencia.',
+    label: 'Portfolio - Introducao',
+    type: SiteContentType.TEXT,
+    group: 'portfolio',
+    description: 'Texto curto de apoio para a pagina de portfolio.',
+  },
+  {
     key: 'contact_phone',
     value: '+55 11 99999-9999',
     label: 'Contato — Telefone/WhatsApp',
@@ -70,6 +103,14 @@ const SITE_CONTENT_DEFAULTS: Array<{
     label: 'Contato — E-mail',
     type: SiteContentType.EMAIL,
     group: 'contact',
+  },
+  {
+    key: 'contact_city',
+    value: 'Sao Paulo - SP',
+    label: 'Contato - Cidade',
+    type: SiteContentType.TEXT,
+    group: 'contact',
+    description: 'Cidade exibida no rodape e cards de contato.',
   },
   {
     key: 'contact_instagram',
@@ -99,6 +140,14 @@ const SITE_CONTENT_DEFAULTS: Array<{
     type: SiteContentType.TEXT,
     group: 'seo',
   },
+  {
+    key: 'seo_default_image',
+    value: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+    label: 'SEO - Imagem padrao',
+    type: SiteContentType.IMAGE,
+    group: 'seo',
+    description: 'Imagem padrao para compartilhamento social.',
+  },
 ]
 
 async function main() {
@@ -125,7 +174,12 @@ async function main() {
   for (const content of SITE_CONTENT_DEFAULTS) {
     await prisma.siteContent.upsert({
       where: { key: content.key },
-      update: {},
+      update: {
+        label: content.label,
+        type: content.type,
+        group: content.group,
+        description: content.description ?? null,
+      },
       create: content,
     })
   }

@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
-import { ZodSchema } from 'zod'
+import { z } from 'zod'
 
 type RequestPart = 'body' | 'query' | 'params'
 
-export function validate<T>(schema: ZodSchema<T>, part: RequestPart = 'body') {
+export function validate<T extends z.ZodTypeAny>(schema: T, part: RequestPart = 'body') {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req[part])
     if (!result.success) {
