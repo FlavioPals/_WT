@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express'
+import { authRouter } from '../modules/auth/auth.router'
 
 export const router = Router()
 
@@ -12,3 +13,5 @@ router.get('/health', (req: Request, res: Response) => {
     meta: { requestId: req.requestId, timestamp: new Date().toISOString() },
   })
 })
+
+router.use('/auth', authRouter)
