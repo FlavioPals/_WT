@@ -5,13 +5,17 @@ vi.mock('../../lib/prisma', () => ({
     project: {
       findFirst: vi.fn(),
     },
+    teamMember: {
+      findFirst: vi.fn(),
+    },
   },
 }))
 
 import { prisma } from '../../lib/prisma'
-import { slugify, uniqueProjectSlug } from '../../lib/slug'
+import { slugify, uniqueProjectSlug, uniqueTeamMemberSlug } from '../../lib/slug'
 
 const mockFindFirst = vi.mocked(prisma.project.findFirst)
+const mockTeamMemberFindFirst = vi.mocked(prisma.teamMember.findFirst)
 
 describe('slugify', () => {
   it('lowercases and replaces spaces with hyphens', () => {
@@ -71,5 +75,28 @@ describe('uniqueProjectSlug', () => {
     mockFindFirst.mockResolvedValueOnce(null)
     const slug = await uniqueProjectSlug('!!!###')
     expect(slug).toBe('project')
+  })
+})
+
+describe('uniqueTeamMemberSlug', () => {
+  it('returns the base slug when no conflict', async () => {
+    mockTeamMemberFindFirst.mockResolvedValueOnce(null)
+    const slug = await uniqueTeamMemberSlug('Maria Silva')
+    expect(slug).toBe('maria-silva')
+  })
+
+  it('appends suffixes until the team member slug is unique', async () => {
+    mockTeamMemberFindFirst
+      .mockResolvedValueOnce({ id: 'a' } as never)
+      .mockResolvedValueOnce({ id: 'b' } as never)
+      .mockResolvedValueOnce(null)
+    const slug = await uniqueTeamMemberSlug('Maria Silva')
+    expect(slug).toBe('maria-silva-3')
+  })
+
+  it('uses a team-member fallback for empty names', async () => {
+    mockTeamMemberFindFirst.mockResolvedValueOnce(null)
+    const slug = await uniqueTeamMemberSlug('!!!')
+    expect(slug).toBe('team-member')
   })
 })
