@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { ContactForm } from './ContactForm'
 
 function WhatsAppIcon() {
   return (
@@ -65,67 +66,68 @@ export function Footer() {
   return (
     <footer id="contato" className="bg-primary text-white">
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-24">
-        <div className="flex flex-col gap-12 lg:flex-row lg:items-end lg:justify-between">
-          {/* Logo + tagline */}
-          <div>
-            <div className="relative mb-6 h-8 w-52">
-              <Image
-                src="/logos/logo-white.png"
-                alt="Studio WT Arquitetura e Design"
-                fill
-                sizes="208px"
-                className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
-              />
-            </div>
-            <p className="text-[11px] tracking-[0.2em] text-[#EFDFBB]/40 uppercase">
-              Arquitetura e Design
-            </p>
-          </div>
-
-          {/* Contato */}
-          <div className="flex flex-col gap-5 lg:items-end">
-            <div className="flex flex-col gap-1.5 text-sm leading-relaxed text-[#EFDFBB]/60 lg:items-end">
-              <p>São Paulo — SP</p>
-              {/* TODO: substituir pelos dados reais do cliente */}
-              <Link href="tel:+5511999999999" className="transition-colors hover:text-[#EFDFBB]">
-                +55 (11) 99999-9999
-              </Link>
-              <Link
-                href="mailto:contato@studiowt.com.br"
-                className="transition-colors hover:text-[#EFDFBB]"
-              >
-                contato@studiowt.com.br
-              </Link>
+        <div className="grid gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-start">
+          <div className="flex flex-col gap-10">
+            <div>
+              <div className="relative mb-6 h-8 w-52">
+                <Image
+                  src="/logos/logo-white.png"
+                  alt="Studio WT Arquitetura e Design"
+                  fill
+                  sizes="208px"
+                  className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
+                />
+              </div>
+              <p className="text-[11px] tracking-[0.2em] text-[#EFDFBB]/40 uppercase">
+                Arquitetura e Design
+              </p>
             </div>
 
-            <div className="flex gap-5">
-              <Link
-                href="https://wa.me/5511999999999"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
-              >
-                <WhatsAppIcon />
-              </Link>
-              <Link
-                href="https://instagram.com/studiowt"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
-              >
-                <InstagramIcon />
-              </Link>
-              <Link
-                href="mailto:contato@studiowt.com.br"
-                aria-label="Enviar e-mail"
-                className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
-              >
-                <MailIcon />
-              </Link>
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-1.5 text-sm leading-relaxed text-[#EFDFBB]/60">
+                <p>São Paulo — SP</p>
+                <Link href="tel:+5511999999999" className="transition-colors hover:text-[#EFDFBB]">
+                  +55 (11) 99999-9999
+                </Link>
+                <Link
+                  href="mailto:contato@studiowt.com.br"
+                  className="transition-colors hover:text-[#EFDFBB]"
+                >
+                  contato@studiowt.com.br
+                </Link>
+              </div>
+
+              <div className="flex gap-5">
+                <Link
+                  href="https://wa.me/5511999999999"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
+                >
+                  <WhatsAppIcon />
+                </Link>
+                <Link
+                  href="https://instagram.com/studiowt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
+                >
+                  <InstagramIcon />
+                </Link>
+                <Link
+                  href="mailto:contato@studiowt.com.br"
+                  aria-label="Enviar e-mail"
+                  className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
+                >
+                  <MailIcon />
+                </Link>
+              </div>
             </div>
           </div>
+
+          <ContactForm />
         </div>
 
         <div className="mt-16 flex flex-col gap-2 border-t border-[#EFDFBB]/10 pt-6 text-[11px] tracking-wider text-[#EFDFBB]/25 sm:flex-row sm:justify-between">

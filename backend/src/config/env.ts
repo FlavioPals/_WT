@@ -23,7 +23,16 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  CONTACT_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(5),
   UPLOAD_MAX_FILE_SIZE_MB: z.coerce.number().int().positive().default(8),
+
+  RESEND_API_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(1).optional()),
+  CONTACT_FROM_EMAIL: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().email().optional()
+  ),
+  CONTACT_TO_EMAIL: z.preprocess((v) => (v === '' ? undefined : v), z.string().email().optional()),
+  CONTACT_SUBJECT_PREFIX: z.string().default('[Studio WT] Novo contato'),
 })
 
 function parseEnv() {
