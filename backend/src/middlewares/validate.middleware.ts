@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
 import { ZodSchema } from 'zod'
 
-export function validate<T>(schema: ZodSchema<T>) {
+type RequestPart = 'body' | 'query' | 'params'
+
+export function validate<T>(schema: ZodSchema<T>, part: RequestPart = 'body') {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const result = schema.safeParse(req.body)
+    const result = schema.safeParse(req[part])
     if (!result.success) {
       const details = result.error.issues.map((i) => ({
         path: i.path.join('.'),
@@ -15,7 +17,8 @@ export function validate<T>(schema: ZodSchema<T>) {
       })
       return
     }
-    req.body = result.data
+    const target = req as unknown as Record<RequestPart, unknown>
+    target[part] = result.data
     next()
   }
 }

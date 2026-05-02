@@ -20,6 +20,24 @@ export function errorMiddleware(
   _next: NextFunction
 ): void {
   const meta = { requestId: req.requestId, timestamp: new Date().toISOString() }
+  const maybeMulterError = err as Error & { code?: string; field?: string }
+
+  if (err.name === 'MulterError') {
+    const isTooLarge =
+      maybeMulterError.code === 'LIMIT_FILE_SIZE' || maybeMulterError.code === 'LIMIT_FILE_COUNT'
+
+    res.status(isTooLarge ? 413 : 400).json({
+      error: {
+        code: isTooLarge ? 'UPLOAD_TOO_LARGE' : 'UPLOAD_ERROR',
+        message: isTooLarge ? 'Uploaded file exceeds the configured limits.' : err.message,
+        ...(maybeMulterError.field
+          ? { details: [{ path: maybeMulterError.field, message: err.message }] }
+          : {}),
+      },
+      meta,
+    })
+    return
+  }
 
   if (err instanceof ZodError) {
     res.status(400).json({

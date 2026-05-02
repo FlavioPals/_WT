@@ -1,4 +1,4 @@
-import { ProjectStatus } from '../../generated/prisma/client'
+import { ProjectImageType, ProjectStatus } from '../../generated/prisma/client'
 import { audit } from '../../lib/audit'
 import { AppError } from '../../middlewares/error.middleware'
 import { paginationMeta, paginationSkip, type PaginatedResult } from '../../lib/pagination'
@@ -29,6 +29,26 @@ async function findOrFail(id: string) {
   })
   if (!project) throw new AppError(404, 'NOT_FOUND', 'Project not found.')
   return project
+}
+
+function presentPublicProject<T extends { images: Array<{ type: ProjectImageType }> }>(project: T) {
+  const rest = { ...project } as Record<string, unknown>
+  const images = project.images
+
+  delete rest.images
+  delete rest.createdById
+  delete rest.updatedById
+  delete rest.deletedAt
+
+  return {
+    ...rest,
+    images: {
+      gallery: images.filter((i) => i.type === ProjectImageType.GALLERY),
+      technical: images.filter((i) => i.type === ProjectImageType.TECHNICAL),
+      artistic: images.filter((i) => i.type === ProjectImageType.ARTISTIC),
+      cover: images.filter((i) => i.type === ProjectImageType.COVER),
+    },
+  }
 }
 
 // ─── Admin operations ─────────────────────────────────────────────────────────
@@ -231,7 +251,8 @@ export async function getPublicProject(slug: string) {
     },
   })
   if (!project) throw new AppError(404, 'NOT_FOUND', 'Project not found.')
-  return project
+
+  return presentPublicProject(project)
 }
 
 export async function listPublicProjects(
@@ -259,5 +280,5 @@ export async function listPublicProjects(
     prisma.project.count({ where }),
   ])
 
-  return { items, pagination: paginationMeta(total, page, limit) }
+  return { items: items.map(presentPublicProject), pagination: paginationMeta(total, page, limit) }
 }
