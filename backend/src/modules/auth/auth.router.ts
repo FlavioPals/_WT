@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { authenticate } from '../../middlewares/authenticate.middleware'
+import { csrf } from '../../middlewares/csrf.middleware'
 import { validate } from '../../middlewares/validate.middleware'
 import * as authController from './auth.controller'
 import { loginSchema } from './auth.schemas'
@@ -17,8 +18,9 @@ const authRateLimit = rateLimit({
 
 export const authRouter = Router()
 
+authRouter.get('/csrf', authController.getCsrf)
 authRouter.post('/login', authRateLimit, validate(loginSchema), authController.login)
 authRouter.post('/refresh', authController.refresh)
 authRouter.post('/logout', authController.logout)
-authRouter.post('/logout-all', authenticate, authController.logoutAll)
+authRouter.post('/logout-all', authenticate, csrf, authController.logoutAll)
 authRouter.get('/me', authenticate, authController.me)
