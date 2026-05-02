@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express'
+import { ZodError } from 'zod'
 
 export class AppError extends Error {
   constructor(
@@ -19,6 +20,18 @@ export function errorMiddleware(
   _next: NextFunction
 ): void {
   const meta = { requestId: req.requestId, timestamp: new Date().toISOString() }
+
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid request data.',
+        details: err.errors.map((e) => ({ path: e.path.join('.'), message: e.message })),
+      },
+      meta,
+    })
+    return
+  }
 
   if (err instanceof AppError) {
     res.status(err.statusCode).json({

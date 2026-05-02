@@ -86,7 +86,7 @@ model Project {
   location       String?
   area           String?
   category       String?
-  coverImage     String
+  coverImage     String?
   status         ProjectStatus @default(DRAFT)
   featured       Boolean       @default(false)
   order          Int           @default(0)
