@@ -14,10 +14,12 @@ export class AppError extends Error {
 
 export function errorMiddleware(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
+  const meta = { requestId: req.requestId, timestamp: new Date().toISOString() }
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       error: {
@@ -25,7 +27,7 @@ export function errorMiddleware(
         message: err.message,
         ...(err.details ? { details: err.details } : {}),
       },
-      meta: { timestamp: new Date().toISOString() },
+      meta,
     })
     return
   }
@@ -33,10 +35,7 @@ export function errorMiddleware(
   console.error(err)
 
   res.status(500).json({
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: 'An unexpected error occurred.',
-    },
-    meta: { timestamp: new Date().toISOString() },
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' },
+    meta,
   })
 }

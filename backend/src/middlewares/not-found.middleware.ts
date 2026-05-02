@@ -6,6 +6,6 @@ export function notFoundMiddleware(req: Request, res: Response): void {
       code: 'NOT_FOUND',
       message: `Route ${req.method} ${req.path} not found.`,
     },
-    meta: { timestamp: new Date().toISOString() },
+    meta: { requestId: req.requestId, timestamp: new Date().toISOString() },
   })
 }
