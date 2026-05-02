@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { ExternalLink, LogOut } from 'lucide-react'
 import { AdminNav } from '@/components/admin/AdminNav'
-import { auth, signOut } from '@/auth'
+import { getAuthUser, callExpressLogout } from '@/lib/api/auth'
 
 export const metadata: Metadata = {
   title: {
@@ -18,9 +18,15 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
+  const user = await getAuthUser()
 
-  if (!session?.user) {
+  if (!user) {
+    redirect('/login')
+  }
+
+  async function logoutAction() {
+    'use server'
+    await callExpressLogout()
     redirect('/login')
   }
 
@@ -52,12 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               Ver site
             </Link>
 
-            <form
-              action={async () => {
-                'use server'
-                await signOut({ redirectTo: '/login' })
-              }}
-            >
+            <form action={logoutAction}>
               <button
                 type="submit"
                 className="text-primary/55 hover:bg-primary/5 hover:text-primary flex h-10 w-full items-center gap-3 px-3 text-left text-sm transition-colors"
@@ -80,16 +81,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-primary text-sm">{session.user.name}</p>
-                <p className="text-primary/45 text-xs">{session.user.email}</p>
+                <p className="text-primary text-sm">{user.name}</p>
+                <p className="text-primary/45 text-xs">{user.email}</p>
               </div>
 
-              <form
-                action={async () => {
-                  'use server'
-                  await signOut({ redirectTo: '/login' })
-                }}
-              >
+              <form action={logoutAction}>
                 <button
                   type="submit"
                   aria-label="Sair"

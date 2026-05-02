@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import type { NextRequest } from 'next/server'
 
-export default auth((request) => {
-  if (request.auth?.user?.email) {
+export function middleware(request: NextRequest) {
+  const accessToken = request.cookies.get('accessToken')?.value
+
+  if (accessToken) {
     return NextResponse.next()
   }
 
@@ -14,7 +16,7 @@ export default auth((request) => {
   loginUrl.searchParams.set('callbackUrl', `${request.nextUrl.pathname}${request.nextUrl.search}`)
 
   return NextResponse.redirect(loginUrl)
-})
+}
 
 export const config = {
   matcher: ['/dashboard/:path*', '/api/admin/:path*'],

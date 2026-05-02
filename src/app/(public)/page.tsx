@@ -1,20 +1,22 @@
 import { HeroCarousel, type HeroSlide } from '@/components/home/HeroCarousel'
 import { ManifestoSection } from '@/components/home/ManifestoSection'
-import { PROJECTS } from '@/lib/projects'
+import { getPublicProjects } from '@/lib/api/projects'
 
-// TODO: replace with db.project.findMany({ where: { featured: true }, orderBy: { order: 'asc' } })
-const FEATURED_PROJECTS: HeroSlide[] = PROJECTS.slice(0, 4).map((project) => ({
-  id: project.id,
-  title: project.title,
-  imageUrl: project.imageUrl ?? project.images[0].src,
-  href: `/portfolio/${project.slug}`,
-  gradient: project.gradient,
-}))
+export default async function HomePage() {
+  const { data: projects } = await getPublicProjects({ featured: true, limit: 4, sort: 'order' })
 
-export default function HomePage() {
+  const slides: HeroSlide[] = projects.map((project) => ({
+    id: project.id,
+    title: project.title,
+    imageUrl:
+      project.coverImage ?? project.images?.cover[0]?.url ?? project.images?.gallery[0]?.url ?? '',
+    href: `/portfolio/${project.slug}`,
+    gradient: 'bg-gradient-to-br from-stone-700 via-stone-800 to-neutral-900',
+  }))
+
   return (
     <>
-      <HeroCarousel slides={FEATURED_PROJECTS} />
+      <HeroCarousel slides={slides} />
       <ManifestoSection />
     </>
   )

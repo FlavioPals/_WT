@@ -2,7 +2,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
-import { auth } from '@/auth'
+import { getAuthUser } from '@/lib/api/auth'
 
 export const metadata: Metadata = {
   title: 'Login',
@@ -28,11 +28,11 @@ function getCallbackUrl(callbackUrl?: string) {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const session = await auth()
+  const user = await getAuthUser()
   const { callbackUrl } = await searchParams
   const safeCallbackUrl = getCallbackUrl(callbackUrl)
 
-  if (session?.user?.email) {
+  if (user?.email) {
     redirect(safeCallbackUrl)
   }
 

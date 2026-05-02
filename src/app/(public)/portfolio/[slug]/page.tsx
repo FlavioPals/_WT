@@ -8,67 +8,117 @@ import { ProjectCarousel } from '@/components/portfolio/ProjectCarousel'
 import { ProjectDocViewer } from '@/components/portfolio/ProjectDocViewer'
 import { cn } from '@/lib/utils'
 import { absoluteUrl } from '@/lib/site'
-import { getAdjacentProjects, getProjectBySlug, PROJECTS } from '@/lib/projects'
+import { getPublicProjects, getProjectBySlug, getAdjacentProjects } from '@/lib/api/projects'
 import { projectImageGalleryJsonLd } from '@/lib/structured-data'
+import { ApiError } from '@/lib/api-client'
 
 type ProjectPageProps = {
   params: Promise<{ slug: string }>
 }
 
-export function generateStaticParams() {
-  return PROJECTS.map((project) => ({ slug: project.slug }))
+export async function generateStaticParams() {
+  try {
+    const { data: projects } = await getPublicProjects({ limit: 100, sort: 'order' })
+    return projects.map((p) => ({ slug: p.slug }))
+  } catch {
+    return []
+  }
 }
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params
-  const project = getProjectBySlug(slug)
 
-  if (!project) return { title: 'Projeto não encontrado' }
+  try {
+    const project = await getProjectBySlug(slug)
+    const description = `${project.category ?? ''} em ${project.location ?? ''}. Projeto ${project.title} do Studio WT Arquitetura e Design.`
 
-  const description = `${project.category} em ${project.location}. Projeto ${project.title} do Studio WT Arquitetura e Design.`
-
-  return {
-    title: project.title,
-    description,
-    alternates: { canonical: `/portfolio/${project.slug}` },
-    openGraph: {
-      title: `${project.title} | Studio WT`,
+    return {
+      title: project.title,
       description,
-      url: `/portfolio/${project.slug}`,
-      images: project.imageUrl
-        ? [{ url: absoluteUrl(project.imageUrl), alt: project.title }]
-        : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${project.title} | Studio WT`,
-      description,
-      images: project.imageUrl ? [absoluteUrl(project.imageUrl)] : undefined,
-    },
+      alternates: { canonical: `/portfolio/${project.slug}` },
+      openGraph: {
+        title: `${project.title} | Studio WT`,
+        description,
+        url: `/portfolio/${project.slug}`,
+        images: project.coverImage
+          ? [{ url: absoluteUrl(project.coverImage), alt: project.title }]
+          : undefined,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${project.title} | Studio WT`,
+        description,
+        images: project.coverImage ? [absoluteUrl(project.coverImage)] : undefined,
+      },
+    }
+  } catch {
+    return { title: 'Projeto não encontrado' }
   }
 }
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params
-  const project = getProjectBySlug(slug)
 
-  if (!project) notFound()
+  let project
+  try {
+    project = await getProjectBySlug(slug)
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) notFound()
+    throw err
+  }
 
-  const { previous, next } = getAdjacentProjects(project.slug)
+  // Adjacent projects require the full list
+  const { data: allProjects } = await getPublicProjects({ limit: 100, sort: 'order' })
+  const { previous, next } = getAdjacentProjects(allProjects, slug)
 
-  const galleryImages = project.images.filter((i) => i.type === 'gallery')
-  const docImages = project.images.filter((i) => i.type === 'technical' || i.type === 'artistic')
+  const galleryImages = (project.images?.gallery ?? []).map((i) => ({
+    id: i.id,
+    src: i.url,
+    alt: i.alt ?? project.title,
+    type: 'gallery' as const,
+  }))
+
+  const docImages = [
+    ...(project.images?.technical ?? []).map((i) => ({
+      id: i.id,
+      src: i.url,
+      alt: i.alt ?? project.title,
+      type: 'technical' as const,
+    })),
+    ...(project.images?.artistic ?? []).map((i) => ({
+      id: i.id,
+      src: i.url,
+      alt: i.alt ?? project.title,
+      type: 'artistic' as const,
+    })),
+  ]
+
+  // projectImageGalleryJsonLd expects the old mock shape; pass a compatible object
+  const projectForJsonLd = {
+    id: project.id,
+    slug: project.slug,
+    title: project.title,
+    year: project.year ?? 0,
+    category: project.category ?? '',
+    location: project.location ?? '',
+    area: project.area ?? '',
+    imageUrl: project.coverImage,
+    gradient: '',
+    concept: project.concept ?? '',
+    description: [project.description],
+    images: galleryImages,
+  }
 
   return (
     <article className="min-h-screen">
-      <JsonLd data={projectImageGalleryJsonLd(project)} />
+      <JsonLd data={projectImageGalleryJsonLd(projectForJsonLd as never)} />
 
-      {/* ── 1. HERO — foto de capa full-screen com ficha técnica ── */}
+      {/* ── 1. HERO ── */}
       <section className="bg-primary relative min-h-screen overflow-hidden">
-        <div className={cn('absolute inset-0', project.gradient)}>
-          {project.imageUrl && (
+        <div className="absolute inset-0 bg-gradient-to-br from-stone-700 via-stone-800 to-neutral-900">
+          {project.coverImage && (
             <Image
-              src={project.imageUrl}
+              src={project.coverImage}
               alt={project.title}
               fill
               priority
@@ -106,53 +156,64 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                   ['Área', project.area],
                   ['Local', project.location],
                   ['Categoria', project.category],
-                ].map(([label, value]) => (
-                  <div key={String(label)}>
-                    <dt className="mb-1.5 text-[10px] tracking-[0.18em] text-white/40 uppercase">
-                      {label}
-                    </dt>
-                    <dd className="text-white/80">{value}</dd>
-                  </div>
-                ))}
+                ].map(([label, value]) =>
+                  value ? (
+                    <div key={String(label)}>
+                      <dt className="mb-1.5 text-[10px] tracking-[0.18em] text-white/40 uppercase">
+                        {label}
+                      </dt>
+                      <dd className="text-white/80">{value}</dd>
+                    </div>
+                  ) : null
+                )}
               </dl>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 2. CARROSSEL — uma foto por vez com setas ── */}
+      {/* ── 2. CARROSSEL ── */}
       {galleryImages.length > 0 && (
         <ProjectCarousel
           images={galleryImages}
           title={project.title}
-          location={project.location}
-          year={project.year}
+          location={project.location ?? ''}
+          year={project.year ?? 0}
         />
       )}
 
-      {/* ── 3. CONCEITO — título editorial + descrição ── */}
-      <section className="px-6 py-20 lg:px-20 lg:py-28">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-14 lg:grid-cols-[380px_1fr] lg:gap-20">
-            <div>
-              <p className="mb-5 text-[11px] tracking-[0.22em] text-[#EFDFBB]/45 uppercase">
-                Conceito
-              </p>
-              <h2 className="font-display text-3xl leading-tight font-light text-[#EFDFBB] lg:text-4xl">
-                {project.concept}
-              </h2>
-            </div>
+      {/* ── 3. CONCEITO ── */}
+      {(project.concept || project.description) && (
+        <section className="px-6 py-20 lg:px-20 lg:py-28">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-14 lg:grid-cols-[380px_1fr] lg:gap-20">
+              {project.concept && (
+                <div>
+                  <p className="mb-5 text-[11px] tracking-[0.22em] text-[#EFDFBB]/45 uppercase">
+                    Conceito
+                  </p>
+                  <h2 className="font-display text-3xl leading-tight font-light text-[#EFDFBB] lg:text-4xl">
+                    {project.concept}
+                  </h2>
+                </div>
+              )}
 
-            <div className="flex flex-col gap-6 text-base leading-relaxed text-[#EFDFBB]/65 lg:pt-10 lg:text-lg">
-              {project.description.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
+              <div
+                className={cn(
+                  'flex flex-col gap-6 text-base leading-relaxed text-[#EFDFBB]/65 lg:text-lg',
+                  project.concept ? 'lg:pt-10' : ''
+                )}
+              >
+                {project.description.split('\n\n').map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── 4. DOCUMENTAÇÃO — técnicas + artísticas unificadas ── */}
+      {/* ── 4. DOCUMENTAÇÃO ── */}
       {docImages.length > 0 && (
         <section className="px-6 pb-20 lg:px-20 lg:pb-28">
           <div className="mx-auto max-w-7xl">
@@ -166,7 +227,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </section>
       )}
 
-      {/* ── 5. NAVEGAÇÃO anterior / próximo ── */}
+      {/* ── 5. NAVEGAÇÃO ── */}
       <nav
         className="border-t border-[#EFDFBB]/10 px-6 py-10 lg:px-20"
         aria-label="Navegar entre projetos"

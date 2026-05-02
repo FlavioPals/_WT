@@ -1,17 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, FolderKanban, ImageIcon, Users } from 'lucide-react'
-import { PROJECTS } from '@/lib/projects'
-import { TEAM_MEMBERS } from '@/lib/team'
-
-const stats = [
-  { label: 'Projetos cadastrados', value: PROJECTS.length, icon: FolderKanban },
-  { label: 'Membros da equipe', value: TEAM_MEMBERS.length, icon: Users },
-  {
-    label: 'Imagens em projetos',
-    value: PROJECTS.reduce((total, project) => total + project.images.length, 0),
-    icon: ImageIcon,
-  },
-]
+import { getAdminProjects } from '@/lib/api/projects'
+import { getAdminTeam } from '@/lib/api/team'
 
 const shortcuts = [
   {
@@ -31,7 +21,18 @@ const shortcuts = [
   },
 ]
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [projectsRes, team] = await Promise.all([getAdminProjects({ limit: 100 }), getAdminTeam()])
+
+  const projects = projectsRes.data
+  const totalImages = projects.reduce((acc, _p) => acc, 0)
+
+  const stats = [
+    { label: 'Projetos cadastrados', value: projects.length, icon: FolderKanban },
+    { label: 'Membros da equipe', value: team.length, icon: Users },
+    { label: 'Imagens em projetos', value: totalImages, icon: ImageIcon },
+  ]
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-10">
@@ -44,7 +45,6 @@ export default function DashboardPage() {
       <div className="mb-10 grid gap-4 md:grid-cols-3">
         {stats.map((stat) => {
           const Icon = stat.icon
-
           return (
             <div key={stat.label} className="border-muted bg-surface border p-5">
               <div className="mb-8 flex items-center justify-between">

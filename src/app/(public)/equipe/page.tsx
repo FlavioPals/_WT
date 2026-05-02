@@ -1,7 +1,9 @@
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import { MemberCard } from '@/components/team/MemberCard'
-import { TEAM_MEMBERS, TEAM_PHOTO } from '@/lib/team'
+import { getPublicTeam } from '@/lib/api/team'
+
+const TEAM_PHOTO = '/logos/foto_equipe.jpg'
 
 export const metadata: Metadata = {
   title: 'Equipe',
@@ -19,7 +21,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function EquipePage() {
+export default async function EquipePage() {
+  const members = await getPublicTeam()
+
+  // Adapt API shape to what MemberCard expects
+  const adapted = members.map((m) => ({
+    id: m.id,
+    name: m.name,
+    role: m.role,
+    bio: m.bio,
+    photoUrl: m.photoUrl,
+  }))
+
   return (
     <div className="min-h-screen">
       <section className="px-6 pt-32 lg:px-20 lg:pt-40">
@@ -67,11 +80,15 @@ export default function EquipePage() {
             </p>
           </div>
 
-          <div>
-            {TEAM_MEMBERS.map((member, index) => (
-              <MemberCard key={member.id} member={member} index={index} />
-            ))}
-          </div>
+          {adapted.length > 0 ? (
+            <div>
+              {adapted.map((member, index) => (
+                <MemberCard key={member.id} member={member} index={index} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-[#EFDFBB]/45">Nenhum profissional cadastrado ainda.</p>
+          )}
         </div>
       </section>
     </div>
