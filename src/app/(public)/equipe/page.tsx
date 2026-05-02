@@ -7,24 +7,34 @@ export const metadata: Metadata = {
   title: 'Equipe',
   description:
     'Conheça a equipe do Studio WT Arquitetura e Design, responsável por projetos residenciais, corporativos e de interiores.',
+  alternates: {
+    canonical: '/equipe',
+  },
+  openGraph: {
+    title: 'Equipe | Studio WT',
+    description:
+      'Conheça a equipe do Studio WT Arquitetura e Design, responsável por projetos residenciais, corporativos e de interiores.',
+    url: '/equipe',
+    images: [{ url: TEAM_PHOTO, alt: 'Equipe do Studio WT Arquitetura e Design' }],
+  },
 }
 
 export default function EquipePage() {
   return (
-    <div className="bg-surface min-h-screen">
+    <div className="min-h-screen">
       <section className="px-6 pt-32 lg:px-20 lg:pt-40">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 grid gap-8 lg:grid-cols-[1fr_420px] lg:items-end">
             <div>
-              <p className="text-muted-foreground mb-4 text-[11px] tracking-[0.22em] uppercase">
+              <p className="mb-4 text-[11px] tracking-[0.22em] text-[#EFDFBB]/50 uppercase">
                 Equipe
               </p>
-              <h1 className="font-display text-primary max-w-4xl text-5xl leading-none font-light lg:text-7xl">
+              <h1 className="font-display max-w-4xl text-5xl leading-none font-light text-[#EFDFBB] lg:text-7xl">
                 Pessoas que desenham espaços para outras pessoas.
               </h1>
             </div>
 
-            <p className="text-primary/70 text-base leading-relaxed lg:text-lg">
+            <p className="text-base leading-relaxed text-[#EFDFBB]/70 lg:text-lg">
               O Studio WT combina repertórios complementares em arquitetura, interiores e gestão de
               obra. Cada projeto nasce de uma escuta compartilhada e avança com precisão em cada
               detalhe.
@@ -48,10 +58,10 @@ export default function EquipePage() {
       <section className="px-6 py-20 lg:px-20 lg:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 grid gap-6 lg:grid-cols-[320px_1fr] lg:items-end">
-            <p className="text-muted-foreground text-[11px] tracking-[0.22em] uppercase">
+            <p className="text-[11px] tracking-[0.22em] text-[#EFDFBB]/50 uppercase">
               Profissionais
             </p>
-            <p className="text-primary/70 max-w-2xl text-base leading-relaxed">
+            <p className="max-w-2xl text-base leading-relaxed text-[#EFDFBB]/70">
               Um time enxuto, próximo e atento, organizado para acompanhar o projeto do primeiro
               encontro à entrega final.
             </p>

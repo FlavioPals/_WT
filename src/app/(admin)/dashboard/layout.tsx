@@ -1,8 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { ExternalLink } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { ExternalLink, LogOut } from 'lucide-react'
 import { AdminNav } from '@/components/admin/AdminNav'
+import { auth, signOut } from '@/auth'
 
 export const metadata: Metadata = {
   title: {
@@ -15,7 +17,13 @@ export const metadata: Metadata = {
   },
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth()
+
+  if (!session?.user) {
+    redirect('/login')
+  }
+
   return (
     <div className="text-primary min-h-screen bg-white">
       <aside className="border-muted bg-surface fixed inset-y-0 left-0 hidden w-72 border-r lg:flex lg:flex-col">
@@ -35,13 +43,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="flex flex-1 flex-col justify-between px-5 py-6">
           <AdminNav />
 
-          <Link
-            href="/"
-            className="text-primary/55 hover:bg-primary/5 hover:text-primary flex h-10 items-center gap-3 px-3 text-sm transition-colors"
-          >
-            <ExternalLink size={16} strokeWidth={1.5} aria-hidden="true" />
-            Ver site
-          </Link>
+          <div className="grid gap-1">
+            <Link
+              href="/"
+              className="text-primary/55 hover:bg-primary/5 hover:text-primary flex h-10 items-center gap-3 px-3 text-sm transition-colors"
+            >
+              <ExternalLink size={16} strokeWidth={1.5} aria-hidden="true" />
+              Ver site
+            </Link>
+
+            <form
+              action={async () => {
+                'use server'
+                await signOut({ redirectTo: '/login' })
+              }}
+            >
+              <button
+                type="submit"
+                className="text-primary/55 hover:bg-primary/5 hover:text-primary flex h-10 w-full items-center gap-3 px-3 text-left text-sm transition-colors"
+              >
+                <LogOut size={16} strokeWidth={1.5} aria-hidden="true" />
+                Sair
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 
@@ -53,9 +78,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <p className="text-primary/70 text-sm">Studio WT</p>
             </div>
 
-            <div className="text-right">
-              <p className="text-primary text-sm">Arquiteto Admin</p>
-              <p className="text-primary/45 text-xs">Sessão local de desenvolvimento</p>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-primary text-sm">{session.user.name}</p>
+                <p className="text-primary/45 text-xs">{session.user.email}</p>
+              </div>
+
+              <form
+                action={async () => {
+                  'use server'
+                  await signOut({ redirectTo: '/login' })
+                }}
+              >
+                <button
+                  type="submit"
+                  aria-label="Sair"
+                  className="text-primary/55 hover:bg-primary/5 hover:text-primary grid size-9 place-items-center transition-colors lg:hidden"
+                >
+                  <LogOut size={16} strokeWidth={1.5} aria-hidden="true" />
+                </button>
+              </form>
             </div>
           </div>
         </header>

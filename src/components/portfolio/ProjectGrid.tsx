@@ -34,11 +34,12 @@ export function ProjectGrid({ projects, categories }: Props) {
           <button
             key={cat}
             onClick={() => setActive(cat)}
+            aria-pressed={active === cat}
             className={cn(
-              'rounded-full border px-4 py-1.5 text-xs tracking-wide transition-colors duration-300',
+              'rounded-full border px-4 py-1.5 text-xs tracking-wide transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-[#EFDFBB] focus-visible:ring-offset-2',
               active === cat
-                ? 'bg-primary border-primary text-white'
-                : 'border-muted text-primary hover:border-primary'
+                ? 'border-[#EFDFBB] bg-[#EFDFBB] text-[#222933]'
+                : 'border-[#EFDFBB]/25 text-[#EFDFBB]/70 hover:border-[#EFDFBB]/60'
             )}
           >
             {cat}
@@ -64,7 +65,7 @@ export function ProjectGrid({ projects, categories }: Props) {
           variants={cardVariants}
           initial="hidden"
           animate="show"
-          className="text-muted-foreground py-24 text-center text-sm"
+          className="py-24 text-center text-sm text-[#EFDFBB]/50"
         >
           Nenhum projeto nesta categoria ainda.
         </motion.p>

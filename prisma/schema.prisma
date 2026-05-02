@@ -4,12 +4,18 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 enum Role {
   ADMIN
   ARCHITECT
+}
+
+enum ProjectImageType {
+  gallery
+  technical
+  artistic
 }
 
 model User {
@@ -26,9 +32,11 @@ model Project {
   id          String         @id @default(cuid())
   slug        String         @unique
   title       String
-  description String         @db.Text
+  concept     String?
+  description String
   year        Int?
   location    String?
+  area        String?
   category    String?
   coverImage  String
   images      ProjectImage[]
@@ -39,19 +47,20 @@ model Project {
 }
 
 model ProjectImage {
-  id        String  @id @default(cuid())
+  id        String           @id @default(cuid())
   url       String
   alt       String?
-  order     Int     @default(0)
+  type      ProjectImageType @default(gallery)
+  order     Int              @default(0)
   projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model TeamMember {
   id        String   @id @default(cuid())
   name      String
   role      String
-  bio       String   @db.Text
+  bio       String
   photoUrl  String
   order     Int      @default(0)
   createdAt DateTime @default(now())
@@ -61,6 +70,6 @@ model TeamMember {
 model SiteContent {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     String   @db.Text
+  value     String
   updatedAt DateTime @updatedAt
 }

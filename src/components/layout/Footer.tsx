@@ -74,25 +74,25 @@ export function Footer() {
                 alt="Studio WT Arquitetura e Design"
                 fill
                 sizes="208px"
-                className="object-contain object-left"
+                className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
               />
             </div>
-            <p className="text-[11px] tracking-[0.2em] text-white/40 uppercase">
+            <p className="text-[11px] tracking-[0.2em] text-[#EFDFBB]/40 uppercase">
               Arquitetura e Design
             </p>
           </div>
 
           {/* Contato */}
           <div className="flex flex-col gap-5 lg:items-end">
-            <div className="flex flex-col gap-1.5 text-sm leading-relaxed text-white/60 lg:items-end">
+            <div className="flex flex-col gap-1.5 text-sm leading-relaxed text-[#EFDFBB]/60 lg:items-end">
               <p>São Paulo — SP</p>
               {/* TODO: substituir pelos dados reais do cliente */}
-              <Link href="tel:+5511999999999" className="transition-colors hover:text-white">
+              <Link href="tel:+5511999999999" className="transition-colors hover:text-[#EFDFBB]">
                 +55 (11) 99999-9999
               </Link>
               <Link
                 href="mailto:contato@studiowt.com.br"
-                className="transition-colors hover:text-white"
+                className="transition-colors hover:text-[#EFDFBB]"
               >
                 contato@studiowt.com.br
               </Link>
@@ -104,7 +104,7 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
-                className="text-white/40 transition-colors hover:text-white"
+                className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
               >
                 <WhatsAppIcon />
               </Link>
@@ -113,14 +113,14 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-white/40 transition-colors hover:text-white"
+                className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
               >
                 <InstagramIcon />
               </Link>
               <Link
                 href="mailto:contato@studiowt.com.br"
                 aria-label="Enviar e-mail"
-                className="text-white/40 transition-colors hover:text-white"
+                className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
               >
                 <MailIcon />
               </Link>
@@ -128,7 +128,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col gap-2 border-t border-white/10 pt-6 text-[11px] tracking-wider text-white/25 sm:flex-row sm:justify-between">
+        <div className="mt-16 flex flex-col gap-2 border-t border-[#EFDFBB]/10 pt-6 text-[11px] tracking-wider text-[#EFDFBB]/25 sm:flex-row sm:justify-between">
           <p>© {new Date().getFullYear()} Studio WT. Todos os direitos reservados.</p>
           <p>Arquitetura e Design</p>
         </div>

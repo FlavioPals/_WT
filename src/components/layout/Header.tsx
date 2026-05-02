@@ -54,37 +54,16 @@ export function Header() {
 
   return (
     <>
-      <header
-        className={cn(
-          'fixed inset-x-0 top-0 z-50 transition-all duration-500',
-          transparent
-            ? 'bg-transparent'
-            : 'border-muted border-b bg-white/95 shadow-sm backdrop-blur-sm'
-        )}
-      >
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#222933]/95 backdrop-blur-sm transition-all duration-500">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-10">
           <Link href="/" aria-label="Studio WT — página inicial">
             <div className="relative h-7 w-44">
-              <Image
-                src="/logos/logo-dark.png"
-                alt="Studio WT Arquitetura e Design"
-                fill
-                sizes="176px"
-                className={cn(
-                  'object-contain object-left transition-opacity duration-500',
-                  transparent ? 'opacity-0' : 'opacity-100'
-                )}
-                priority
-              />
               <Image
                 src="/logos/logo-white.png"
                 alt="Studio WT Arquitetura e Design"
                 fill
                 sizes="176px"
-                className={cn(
-                  'object-contain object-left transition-opacity duration-500',
-                  transparent ? 'opacity-100' : 'opacity-0'
-                )}
+                className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
                 priority
               />
             </div>
@@ -93,10 +72,7 @@ export function Header() {
           <button
             onClick={() => setOpen(true)}
             aria-label="Abrir menu de navegação"
-            className={cn(
-              'p-1.5 transition-colors duration-300',
-              transparent ? 'text-white' : 'text-primary hover:text-accent'
-            )}
+            className="rounded-sm p-1.5 text-[#EFDFBB]/70 transition-all duration-300 outline-none hover:text-[#EFDFBB] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4"
           >
             <Menu size={22} strokeWidth={1.5} />
           </button>
@@ -107,18 +83,16 @@ export function Header() {
         <SheetContent
           side="right"
           showCloseButton={false}
-          className="border-muted flex w-72 flex-col gap-0 border-l bg-white p-0 sm:w-80"
+          className="bg-primary flex w-72 flex-col gap-0 border-l border-white/10 p-0 sm:w-80"
         >
           <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
 
-          <div className="border-muted flex h-16 shrink-0 items-center justify-between border-b px-8">
-            <span className="text-muted-foreground text-[11px] tracking-[0.18em] uppercase">
-              Menu
-            </span>
+          <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-8">
+            <span className="text-[11px] tracking-[0.18em] text-[#EFDFBB]/50 uppercase">Menu</span>
             <button
               onClick={() => setOpen(false)}
               aria-label="Fechar menu"
-              className="text-primary hover:text-accent transition-colors"
+              className="text-[#EFDFBB]/70 transition-colors outline-none hover:text-[#EFDFBB] focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-4"
             >
               <X size={18} strokeWidth={1.5} />
             </button>
@@ -136,7 +110,7 @@ export function Header() {
                 {item.href.startsWith('#') ? (
                   <button
                     onClick={() => handleNav(item.href)}
-                    className="font-display text-primary hover:text-accent w-full py-3 text-left text-[1.65rem] leading-none font-light transition-colors"
+                    className="font-display w-full py-3 text-left text-[1.65rem] leading-none font-light text-[#EFDFBB]/85 transition-colors outline-none hover:text-[#EFDFBB] focus-visible:text-[#EFDFBB]"
                   >
                     {item.label}
                   </button>
@@ -144,7 +118,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     onClick={() => handleNav(item.href)}
-                    className="font-display text-primary hover:text-accent block py-3 text-[1.65rem] leading-none font-light transition-colors"
+                    className="font-display block py-3 text-[1.65rem] leading-none font-light text-[#EFDFBB]/85 transition-colors outline-none hover:text-[#EFDFBB] focus-visible:text-[#EFDFBB]"
                   >
                     {item.label}
                   </Link>
@@ -154,7 +128,7 @@ export function Header() {
           </motion.nav>
 
           <div className="mt-auto px-8 pb-10">
-            <p className="text-muted-foreground text-[11px] tracking-[0.14em] uppercase">
+            <p className="text-[11px] tracking-[0.14em] text-white/40 uppercase">
               Studio WT · Arquitetura e Design
             </p>
           </div>

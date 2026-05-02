@@ -15,18 +15,18 @@
 
 :root {
   /* Paleta da marca mapeada para as variáveis semânticas do shadcn */
-  --background: #ffffff;
-  --foreground: #222933;
-  --card: #ffffff;
-  --card-foreground: #222933;
-  --popover: #ffffff;
-  --popover-foreground: #222933;
+  --background: #222933;
+  --foreground: #efdfbb;
+  --card: #2a303d;
+  --card-foreground: #efdfbb;
+  --popover: #2a303d;
+  --popover-foreground: #efdfbb;
   --primary: #222933;
   --primary-foreground: #ffffff;
   --secondary: #f7f7f5;
   --secondary-foreground: #222933;
   --muted: #cdd3da;
-  --muted-foreground: #222933;
+  --muted-foreground: #a89e85;
   --accent: #684933;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
@@ -120,6 +120,6 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-body;
+    @apply font-display;
   }
 }

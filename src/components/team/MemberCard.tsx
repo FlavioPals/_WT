@@ -11,7 +11,7 @@ export function MemberCard({ member, index }: MemberCardProps) {
   const inverted = index % 2 === 1
 
   return (
-    <article className="border-muted grid gap-8 border-t py-10 lg:grid-cols-2 lg:gap-14 lg:py-14">
+    <article className="grid gap-8 border-t border-[#EFDFBB]/15 py-10 lg:grid-cols-2 lg:gap-14 lg:py-14">
       <div
         className={cn(
           'group bg-primary relative aspect-[4/5] overflow-hidden',
@@ -33,13 +33,13 @@ export function MemberCard({ member, index }: MemberCardProps) {
           inverted && 'lg:order-1 lg:justify-self-end'
         )}
       >
-        <p className="text-muted-foreground mb-4 text-[11px] tracking-[0.2em] uppercase">
+        <p className="mb-4 text-[11px] tracking-[0.2em] text-[#EFDFBB]/50 uppercase">
           {member.role}
         </p>
-        <h2 className="font-display text-primary text-4xl leading-tight font-light lg:text-5xl">
+        <h2 className="font-display text-4xl leading-tight font-light text-[#EFDFBB] lg:text-5xl">
           {member.name}
         </h2>
-        <p className="text-primary/75 mt-8 text-base leading-relaxed lg:text-lg">{member.bio}</p>
+        <p className="mt-8 text-base leading-relaxed text-[#EFDFBB]/70 lg:text-lg">{member.bio}</p>
       </div>
     </article>
   )

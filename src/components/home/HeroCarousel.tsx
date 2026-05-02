@@ -53,46 +53,60 @@ export function HeroCarousel({ slides }: Props) {
 
   return (
     <section
-      className="relative h-screen w-full overflow-hidden"
+      className="w-full px-4 pt-24 pb-6 lg:px-16"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label="Destaque de projetos"
     >
-      {/* All slides pre-rendered; only opacity animated to avoid next/image remount issues */}
-      <div className="absolute inset-0">
-        {slides.map((s, i) => (
+      <div className="relative h-[65vh] w-full overflow-hidden">
+        {/* All slides pre-rendered; only opacity animated to avoid next/image remount issues */}
+        <div className="absolute inset-0">
+          {slides.map((s, i) => (
+            <motion.div
+              key={s.id}
+              animate={{ opacity: i === current ? 1 : 0 }}
+              transition={{ duration: 1.2, ease: EASE }}
+              className={cn('absolute inset-0', s.gradient)}
+            >
+              <Image
+                src={s.imageUrl}
+                alt={s.title}
+                fill
+                sizes="100vw"
+                className="object-cover"
+                quality={85}
+                priority={i === 0}
+              />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/20" />
+
+        {slides[current]?.href && (
+          <Link
+            href={slides[current].href}
+            className="absolute inset-0 z-10"
+            aria-label={`Ver projeto: ${slides[current].title}`}
+          />
+        )}
+
+        {/* Progress bar */}
+        {!paused && (
           <motion.div
-            key={s.id}
-            animate={{ opacity: i === current ? 1 : 0 }}
-            transition={{ duration: 1.2, ease: EASE }}
-            className={cn('absolute inset-0', s.gradient)}
-          >
-            <Image
-              src={s.imageUrl}
-              alt={s.title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority={i === 0}
-            />
-          </motion.div>
-        ))}
+            key={current + '-progress'}
+            className="absolute bottom-0 left-0 h-[2px] bg-white/40"
+            initial={{ width: '0%' }}
+            animate={{ width: '100%' }}
+            transition={{ duration: INTERVAL_MS / 1000, ease: 'linear' }}
+          />
+        )}
       </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20" />
-
-      {slides[current]?.href && (
-        <Link
-          href={slides[current].href}
-          className="absolute inset-0 z-10"
-          aria-label={`Ver projeto: ${slides[current].title}`}
-        />
-      )}
-
-      {/* Dot indicators */}
+      {/* Dot indicators — alinhados abaixo da foto */}
       <div
-        className="absolute right-6 bottom-10 z-20 flex gap-2 lg:right-20"
+        className="mt-4 flex justify-end gap-2 pr-2"
         role="tablist"
         aria-label="Selecionar projeto"
       >
@@ -104,23 +118,12 @@ export function HeroCarousel({ slides }: Props) {
             aria-label={`Projeto ${i + 1}: ${s.title}`}
             onClick={() => goTo(i)}
             className={cn(
-              'h-[3px] transition-all duration-500',
-              i === current ? 'w-8 bg-white' : 'w-3 bg-white/35 hover:bg-white/60'
+              'h-2.5 rounded-full transition-all duration-500 outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-transparent',
+              i === current ? 'w-7 bg-[#EFDFBB]' : 'w-2.5 bg-[#EFDFBB]/35 hover:bg-[#EFDFBB]/60'
             )}
           />
         ))}
       </div>
-
-      {/* Progress bar */}
-      {!paused && (
-        <motion.div
-          key={current + '-progress'}
-          className="absolute bottom-0 left-0 h-[2px] bg-white/40"
-          initial={{ width: '0%' }}
-          animate={{ width: '100%' }}
-          transition={{ duration: INTERVAL_MS / 1000, ease: 'linear' }}
-        />
-      )}
     </section>
   )
 }

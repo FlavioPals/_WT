@@ -25,7 +25,7 @@ const ABOUT_PARAGRAPHS = [
 
 export function AboutHero() {
   return (
-    <section className="bg-surface min-h-screen px-6 pt-32 pb-24 lg:px-20 lg:pt-40 lg:pb-32">
+    <section className="min-h-screen px-6 pt-32 pb-24 lg:px-20 lg:pt-40 lg:pb-32">
       <div className="mx-auto max-w-7xl">
         {/* Label */}
         <motion.p
@@ -33,7 +33,7 @@ export function AboutHero() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="text-muted-foreground mb-16 text-[11px] tracking-[0.22em] uppercase"
+          className="mb-16 text-[11px] tracking-[0.22em] text-[#EFDFBB]/50 uppercase"
         >
           Sobre o escritório
         </motion.p>
@@ -51,16 +51,16 @@ export function AboutHero() {
           >
             <div className="relative h-14 w-64 lg:h-20 lg:w-80">
               <Image
-                src="/logos/logo-dark.png"
+                src="/logos/logo-white.png"
                 alt="Studio WT Arquitetura e Design"
                 fill
                 sizes="(max-width: 1024px) 256px, 320px"
-                className="object-contain object-left"
+                className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
                 priority
               />
             </div>
 
-            <p className="text-muted-foreground mt-8 text-[11px] tracking-[0.2em] uppercase">
+            <p className="mt-8 text-[11px] tracking-[0.2em] text-[#EFDFBB]/50 uppercase">
               São Paulo — SP
             </p>
           </motion.div>
@@ -75,14 +75,14 @@ export function AboutHero() {
               whileInView="show"
               viewport={{ once: true }}
             >
-              <p className="text-muted-foreground mb-4 text-[11px] tracking-[0.18em] uppercase">
+              <p className="mb-4 text-[11px] tracking-[0.18em] text-[#EFDFBB]/50 uppercase">
                 Áreas de atuação
               </p>
               <div className="flex flex-wrap gap-2">
                 {areas.map((area) => (
                   <span
                     key={area}
-                    className="border-muted text-primary rounded-full border px-4 py-1.5 text-xs tracking-wide"
+                    className="rounded-full border border-[#EFDFBB]/25 px-4 py-1.5 text-xs tracking-wide text-[#EFDFBB]/80"
                   >
                     {area}
                   </span>
@@ -100,7 +100,7 @@ export function AboutHero() {
                   initial="hidden"
                   whileInView="show"
                   viewport={{ once: true }}
-                  className="text-primary/80 text-base leading-relaxed lg:text-lg"
+                  className="text-base leading-relaxed text-[#EFDFBB]/75 lg:text-lg"
                 >
                   {paragraph}
                 </motion.p>
@@ -114,7 +114,7 @@ export function AboutHero() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true }}
-              className="border-muted grid grid-cols-3 gap-8 border-t pt-10"
+              className="grid grid-cols-3 gap-8 border-t border-[#EFDFBB]/15 pt-10"
             >
               {[
                 { value: '2015', label: 'Fundação' },
@@ -122,10 +122,10 @@ export function AboutHero() {
                 { value: '6', label: 'Profissionais' },
               ].map(({ value, label }) => (
                 <div key={label}>
-                  <p className="font-display text-primary text-3xl font-light lg:text-4xl">
+                  <p className="font-display text-3xl font-light text-[#EFDFBB] lg:text-4xl">
                     {value}
                   </p>
-                  <p className="text-muted-foreground mt-1 text-[11px] tracking-[0.16em] uppercase">
+                  <p className="mt-1 text-[11px] tracking-[0.16em] text-[#EFDFBB]/50 uppercase">
                     {label}
                   </p>
                 </div>

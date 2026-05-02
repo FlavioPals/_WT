@@ -29,7 +29,7 @@ export function ProjectCard({ project }: { project: Project }) {
               alt={project.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className="object-cover grayscale transition-all duration-700 ease-out group-hover:scale-105 group-hover:grayscale-0"
             />
           )}
         </div>

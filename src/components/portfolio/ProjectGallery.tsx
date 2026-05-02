@@ -39,7 +39,7 @@ export function ProjectGallery({ images, title }: ProjectGalleryProps) {
             type="button"
             onClick={() => setSelectedIndex(index)}
             className={cn(
-              'group bg-primary relative block overflow-hidden text-left',
+              'group bg-primary focus-visible:ring-accent relative block overflow-hidden text-left outline-none focus-visible:ring-2 focus-visible:ring-offset-4',
               index === 0 && images.length > 2
                 ? 'aspect-[4/3] md:col-span-4 md:row-span-2'
                 : 'aspect-[4/3] md:col-span-2'
@@ -54,6 +54,7 @@ export function ProjectGallery({ images, title }: ProjectGalleryProps) {
                 index === 0 ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 100vw, 33vw'
               }
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              quality={85}
             />
             <span className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
             <span className="text-primary absolute right-4 bottom-4 grid size-9 place-items-center bg-white/90 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -94,7 +95,7 @@ export function ProjectGallery({ images, title }: ProjectGalleryProps) {
                     type="button"
                     onClick={showPrevious}
                     aria-label="Imagem anterior"
-                    className="text-primary absolute top-1/2 left-3 grid size-10 -translate-y-1/2 place-items-center bg-white/90 transition-colors hover:bg-white"
+                    className="text-primary focus-visible:ring-accent absolute top-1/2 left-3 grid size-10 -translate-y-1/2 place-items-center bg-white/90 transition-colors outline-none hover:bg-white focus-visible:ring-2"
                   >
                     <ChevronLeft size={20} strokeWidth={1.5} aria-hidden="true" />
                   </button>
@@ -102,7 +103,7 @@ export function ProjectGallery({ images, title }: ProjectGalleryProps) {
                     type="button"
                     onClick={showNext}
                     aria-label="Próxima imagem"
-                    className="text-primary absolute top-1/2 right-3 grid size-10 -translate-y-1/2 place-items-center bg-white/90 transition-colors hover:bg-white"
+                    className="text-primary focus-visible:ring-accent absolute top-1/2 right-3 grid size-10 -translate-y-1/2 place-items-center bg-white/90 transition-colors outline-none hover:bg-white focus-visible:ring-2"
                   >
                     <ChevronRight size={20} strokeWidth={1.5} aria-hidden="true" />
                   </button>

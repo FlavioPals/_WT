@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, FolderKanban, LogOut, Users } from 'lucide-react'
+import { FileText, FolderKanban, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -36,14 +36,6 @@ export function AdminNav() {
           </Link>
         )
       })}
-
-      <button
-        type="button"
-        className="text-primary/55 hover:bg-primary/5 hover:text-primary mt-4 flex h-10 items-center gap-3 px-3 text-left text-sm transition-colors"
-      >
-        <LogOut size={16} strokeWidth={1.5} aria-hidden="true" />
-        Sair
-      </button>
     </nav>
   )
 }
