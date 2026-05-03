@@ -109,10 +109,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | Install      | `npm ci --include=dev`                                 |
 | Build        | `npx prisma generate && npm run build`                 |
 | Start        | `npm run deploy:start`                                 |
+| Migrations   | `npm run deploy:migrate`                               |
 | Health probe | `GET /api/v1/health`                                   |
 | Ready probe  | `GET /api/v1/ready` (usa para readiness — testa banco) |
 
-> O `prisma migrate deploy` deve rodar **toda vez** antes do start (ou no release phase). Ele aplica migrations idempotentemente — sem prompts.
+> O start de produção não roda migrations por padrão para evitar loop de boot no Render quando o banco recusa a conexão de migration. Rode `npm run deploy:migrate` no Shell do Render após o deploy, ou defina `RUN_MIGRATIONS_ON_START=true` somente quando a `DATABASE_URL` direta estiver confirmada e acessível.
 
 > Para o backend no Render, use uma `DATABASE_URL` direta e acessível pelo serviço. Se estiver usando Supabase/Neon, prefira a connection string direta para migrations; URLs de pooler/pgBouncer podem falhar no `prisma migrate deploy`.
 
@@ -124,7 +125,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 4. Start Command: `npm run deploy:start`
 5. Health Check Path: `/api/v1/ready`
 6. Variáveis de ambiente: cole todas da lista acima.
-7. (Opcional) Disco persistente não é necessário — uploads vão para Cloudinary.
+7. Após o deploy subir, abra o Shell do serviço e rode `npm run deploy:migrate`.
+8. (Opcional) Disco persistente não é necessário — uploads vão para Cloudinary.
 
 ### Railway
 

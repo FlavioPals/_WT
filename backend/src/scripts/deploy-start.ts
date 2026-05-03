@@ -1,7 +1,4 @@
 import 'dotenv/config'
-import { spawnSync } from 'child_process'
-import { existsSync } from 'fs'
-import path from 'path'
 
 const REQUIRED_ENV = [
   'DATABASE_URL',
@@ -39,39 +36,17 @@ function validateDeployEnv(): void {
   }
 }
 
-function runMigrations(): void {
-  console.log('[deploy] Running Prisma migrations...')
-  const prismaBin = path.resolve(process.cwd(), 'node_modules', 'prisma', 'build', 'index.js')
-
-  if (!existsSync(prismaBin)) {
-    console.error(`[deploy] Prisma CLI not found at ${prismaBin}.`)
-    console.error(
-      '[deploy] Make sure the "prisma" package is installed as a production dependency.'
+async function maybeRunMigrations(): Promise<void> {
+  if (process.env.RUN_MIGRATIONS_ON_START !== 'true') {
+    console.log('[deploy] Skipping Prisma migrations on start.')
+    console.log(
+      '[deploy] Run "npm run deploy:migrate" from Render Shell, or set RUN_MIGRATIONS_ON_START=true when DATABASE_URL is direct and reachable.'
     )
-    process.exit(1)
+    return
   }
 
-  console.log(`[deploy] Using Prisma CLI at ${prismaBin}`)
-
-  const result = spawnSync(process.execPath, [prismaBin, 'migrate', 'deploy'], {
-    encoding: 'utf8',
-    env: process.env,
-  })
-
-  if (result.stdout) process.stdout.write(result.stdout)
-  if (result.stderr) process.stderr.write(result.stderr)
-
-  if (result.error) {
-    console.error('[deploy] Failed to start Prisma migrate deploy:', result.error)
-    process.exit(1)
-  }
-
-  if (result.status !== 0) {
-    console.error(
-      `[deploy] Prisma migrate deploy failed with status ${result.status ?? 'unknown'}.`
-    )
-    process.exit(result.status ?? 1)
-  }
+  const { runDeployMigrations } = await import('./deploy-migrate')
+  runDeployMigrations()
 }
 
 async function startServer(): Promise<void> {
@@ -79,6 +54,13 @@ async function startServer(): Promise<void> {
   await import('../server')
 }
 
-validateDeployEnv()
-runMigrations()
-void startServer()
+async function main(): Promise<void> {
+  validateDeployEnv()
+  await maybeRunMigrations()
+  await startServer()
+}
+
+void main().catch((error) => {
+  console.error('[deploy] Failed to start API server:', error)
+  process.exit(1)
+})

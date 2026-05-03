@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "deploy:start": "node dist/scripts/deploy-start.js",
+    "deploy:migrate": "node dist/scripts/deploy-migrate.js",
     "lint": "eslint src",
     "test": "vitest",
     "test:run": "vitest run",
