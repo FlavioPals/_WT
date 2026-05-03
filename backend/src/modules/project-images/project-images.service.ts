@@ -3,6 +3,7 @@ import { ProjectImageType, ProjectStatus } from '../../generated/prisma/client'
 import { audit } from '../../lib/audit'
 import { revalidateProject } from '../../lib/revalidate'
 import {
+  deleteFromStorage,
   getImageDimensions,
   uploadToCloudinary,
   validateImageDimensions,
@@ -12,7 +13,6 @@ import {
 import { AppError } from '../../middlewares/error.middleware'
 import { prisma } from '../../lib/prisma'
 import { env } from '../../config/env'
-import { cloudinary } from '../../config/cloudinary'
 import type {
   ListImagesQuery,
   ReorderImagesInput,
@@ -222,9 +222,7 @@ export async function softDeleteImage(imageId: string, actorId: string) {
 export async function hardDeleteImage(imageId: string, actorId: string) {
   const existing = await findImageIncludingDeletedOrFail(imageId)
 
-  if (existing.publicId) {
-    await cloudinary.uploader.destroy(existing.publicId)
-  }
+  await deleteFromStorage(existing.publicId)
 
   await prisma.$transaction([
     prisma.projectImage.delete({ where: { id: imageId } }),

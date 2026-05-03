@@ -10,6 +10,7 @@ import {
   unpublishProject,
   uploadProjectImages,
   deleteProjectImage,
+  reorderProjectImages,
 } from '@/lib/api/projects'
 import { ApiError } from '@/lib/api-client'
 
@@ -110,6 +111,19 @@ export async function deleteProjectImageAction(imageId: string): Promise<Project
   try {
     await deleteProjectImage(imageId)
     return { success: 'Imagem removida.' }
+  } catch (err) {
+    return { error: extractError(err) }
+  }
+}
+
+export async function reorderProjectImagesAction(
+  projectId: string,
+  ids: string[]
+): Promise<ProjectFormState> {
+  try {
+    await reorderProjectImages(projectId, ids)
+    revalidatePath(`/dashboard/projetos/${projectId}`)
+    return {}
   } catch (err) {
     return { error: extractError(err) }
   }

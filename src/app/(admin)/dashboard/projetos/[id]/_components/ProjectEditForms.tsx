@@ -1,26 +1,22 @@
 'use client'
 
-import { useActionState, useRef, useState } from 'react'
+import { useActionState, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { GripVertical, ImagePlus, LoaderCircle, Trash2 } from 'lucide-react'
+import { ImagePlus, LoaderCircle } from 'lucide-react'
 import type { Project } from '@/lib/api/projects'
 import {
   deleteProjectAction,
   deleteProjectImageAction,
   publishProjectAction,
+  reorderProjectImagesAction,
   unpublishProjectAction,
   updateProjectAction,
   uploadProjectImagesAction,
   type ProjectFormState,
 } from '../../_actions'
+import { SortableImageList } from './SortableImageList'
 
 const CATEGORIES = ['Residencial', 'Corporativo', 'Interiores', 'Retrofit']
-
-const IMAGE_TYPES = [
-  { value: 'GALLERY', label: 'Carrossel' },
-  { value: 'TECHNICAL', label: 'Técnica' },
-  { value: 'ARTISTIC', label: 'Artística' },
-]
 
 type ImageSectionType = 'GALLERY' | 'TECHNICAL' | 'ARTISTIC'
 
@@ -38,12 +34,16 @@ export function ProjectEditForms({ project }: Props) {
   const [uploading, setUploading] = useState<Partial<Record<ImageSectionType, boolean>>>({})
   const [uploadError, setUploadError] = useState<Partial<Record<ImageSectionType, string>>>({})
   const [deleting, setDeleting] = useState<Set<string>>(new Set())
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const [coverError, setCoverError] = useState<string | undefined>()
+  const [, startReorderTransition] = useTransition()
 
   const fileInputRefs = {
     GALLERY: useRef<HTMLInputElement>(null),
     TECHNICAL: useRef<HTMLInputElement>(null),
     ARTISTIC: useRef<HTMLInputElement>(null),
   }
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const galleryImages = project.images?.gallery ?? []
   const technicalImages = project.images?.technical ?? []
@@ -75,6 +75,34 @@ export function ProjectEditForms({ project }: Props) {
       setUploading((prev) => ({ ...prev, [type]: false }))
       const ref = fileInputRefs[type].current
       if (ref) ref.value = ''
+    }
+  }
+
+  function handleReorder(ids: string[]) {
+    startReorderTransition(async () => {
+      await reorderProjectImagesAction(project.id, ids)
+    })
+  }
+
+  async function handleCoverUpload(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setUploadingCover(true)
+    setCoverError(undefined)
+    try {
+      const formData = new FormData()
+      formData.append('files', files[0])
+      formData.append('type', 'COVER')
+      const result = await uploadProjectImagesAction(project.id, {}, formData)
+      if (result.error) {
+        setCoverError(result.error)
+      } else {
+        router.refresh()
+      }
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : 'Erro ao enviar capa.')
+    } finally {
+      setUploadingCover(false)
+      if (coverInputRef.current) coverInputRef.current.value = ''
     }
   }
 
@@ -262,60 +290,12 @@ export function ProjectEditForms({ project }: Props) {
                   </p>
                 </div>
               ) : (
-                <div className="grid gap-2">
-                  {section.images.map((image) => (
-                    <div
-                      key={image.id}
-                      className="border-muted flex items-center gap-3 border bg-white/50 p-3"
-                    >
-                      <GripVertical
-                        size={16}
-                        strokeWidth={1.5}
-                        className="text-primary/25 shrink-0 cursor-grab"
-                        aria-hidden="true"
-                      />
-                      <div
-                        className="bg-muted relative h-12 w-20 shrink-0 overflow-hidden"
-                        style={{
-                          backgroundImage: `url(${image.url})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }}
-                      />
-                      <span className="text-primary/60 min-w-0 flex-1 truncate text-sm">
-                        {image.alt ?? image.url}
-                      </span>
-                      <select
-                        defaultValue={image.type}
-                        className="border-muted focus:border-primary shrink-0 border bg-white px-2 py-1 text-xs transition-colors outline-none"
-                      >
-                        {IMAGE_TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        aria-label="Remover imagem"
-                        disabled={deleting.has(image.id)}
-                        onClick={() => handleDelete(image.id)}
-                        className="text-primary/30 hover:text-accent shrink-0 transition-colors disabled:pointer-events-none disabled:opacity-40"
-                      >
-                        {deleting.has(image.id) ? (
-                          <LoaderCircle
-                            size={15}
-                            strokeWidth={1.5}
-                            className="animate-spin"
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <Trash2 size={15} strokeWidth={1.5} aria-hidden="true" />
-                        )}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <SortableImageList
+                  images={section.images}
+                  deleting={deleting}
+                  onDelete={handleDelete}
+                  onReorder={handleReorder}
+                />
               )}
             </div>
           ))}
@@ -415,6 +395,21 @@ export function ProjectEditForms({ project }: Props) {
           <p className="text-primary/45 mb-4 text-[11px] tracking-[0.18em] uppercase">
             Foto de capa
           </p>
+
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleCoverUpload(e.target.files)}
+          />
+
+          {coverError && (
+            <p className="border-accent/30 bg-accent/5 text-accent mb-3 border px-3 py-2 text-xs">
+              {coverError}
+            </p>
+          )}
+
           {project.coverImage ? (
             <div>
               <div
@@ -423,18 +418,39 @@ export function ProjectEditForms({ project }: Props) {
               />
               <button
                 type="button"
-                className="border-muted text-primary/60 hover:border-primary hover:text-primary w-full border py-2 text-xs tracking-wide transition-colors"
+                disabled={uploadingCover}
+                onClick={() => coverInputRef.current?.click()}
+                className="border-muted text-primary/60 hover:border-primary hover:text-primary inline-flex w-full items-center justify-center gap-1.5 border py-2 text-xs tracking-wide transition-colors disabled:pointer-events-none disabled:opacity-50"
               >
-                Trocar imagem
+                {uploadingCover ? (
+                  <LoaderCircle
+                    size={13}
+                    strokeWidth={1.5}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                {uploadingCover ? 'Enviando…' : 'Trocar imagem'}
               </button>
             </div>
           ) : (
             <button
               type="button"
-              className="border-muted flex w-full flex-col items-center gap-2 border border-dashed py-8 text-sm text-[#684933] transition-colors hover:border-[#684933]"
+              disabled={uploadingCover}
+              onClick={() => coverInputRef.current?.click()}
+              className="border-muted flex w-full flex-col items-center gap-2 border border-dashed py-8 text-sm text-[#684933] transition-colors hover:border-[#684933] disabled:pointer-events-none disabled:opacity-50"
             >
-              <ImagePlus size={20} strokeWidth={1.5} aria-hidden="true" />
-              Enviar capa
+              {uploadingCover ? (
+                <LoaderCircle
+                  size={20}
+                  strokeWidth={1.5}
+                  className="animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <ImagePlus size={20} strokeWidth={1.5} aria-hidden="true" />
+              )}
+              {uploadingCover ? 'Enviando…' : 'Enviar capa'}
             </button>
           )}
         </div>

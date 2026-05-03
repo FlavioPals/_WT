@@ -196,4 +196,8 @@ export async function deleteProjectImage(imageId: string): Promise<void> {
   await adminMutate('DELETE', `/admin/project-images/${imageId}`)
 }
 
+export async function reorderProjectImages(projectId: string, ids: string[]): Promise<void> {
+  await adminMutate('POST', `/admin/projects/${projectId}/images/reorder`, { ids })
+}
+
 export type { Pagination }

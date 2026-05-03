@@ -16,7 +16,8 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     public readonly code: string,
-    message: string
+    message: string,
+    public readonly details?: Array<{ path: string; message: string }>
   ) {
     super(message)
     this.name = 'ApiError'
@@ -26,16 +27,18 @@ export class ApiError extends Error {
 async function parseError(res: Response): Promise<never> {
   let code = 'UNKNOWN_ERROR'
   let message = `Request failed with status ${res.status}`
+  let details: Array<{ path: string; message: string }> | undefined
 
   try {
     const body = await res.json()
     code = body?.error?.code ?? code
     message = body?.error?.message ?? message
+    if (Array.isArray(body?.error?.details)) details = body.error.details
   } catch {
     // ignore parse errors
   }
 
-  throw new ApiError(res.status, code, message)
+  throw new ApiError(res.status, code, message, details)
 }
 
 // ─── Pagination & response types ──────────────────────────────────────────────

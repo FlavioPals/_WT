@@ -17,7 +17,7 @@ export const createTeamMemberSchema = z.object({
   slug: slugField,
   role: z.string().min(2, 'Role must be at least 2 characters.').max(120),
   bio: z.string().min(1, 'Bio is required.').max(5000),
-  photoUrl: z.string().url('Photo URL must be a valid URL.'),
+  photoUrl: z.string().min(1, 'URL da foto é obrigatória.').optional(),
   photoPublicId: z.string().optional().nullable(),
   email: z.string().email().optional().nullable(),
   instagramUrl: nullableUrl,

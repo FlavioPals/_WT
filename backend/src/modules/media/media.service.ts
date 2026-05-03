@@ -1,10 +1,10 @@
 import type { Express } from 'express'
-import { cloudinary } from '../../config/cloudinary'
 import { env } from '../../config/env'
 import { audit } from '../../lib/audit'
 import { paginationMeta, paginationSkip, type PaginatedResult } from '../../lib/pagination'
 import { prisma } from '../../lib/prisma'
 import {
+  deleteFromStorage,
   getImageDimensions,
   uploadToCloudinary,
   validateImageDimensions,
@@ -144,7 +144,7 @@ export async function softDeleteMediaAsset(id: string, actorId: string) {
 export async function hardDeleteMediaAsset(id: string, actorId: string) {
   const existing = await findAssetOrFail(id, true)
 
-  await cloudinary.uploader.destroy(existing.publicId)
+  await deleteFromStorage(existing.publicId)
   await prisma.mediaAsset.delete({ where: { id } })
 
   await audit({

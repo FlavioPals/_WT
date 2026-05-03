@@ -19,7 +19,7 @@ export interface CreateTeamMemberInput {
   name: string
   role: string
   bio: string
-  photoUrl: string
+  photoUrl?: string
   slug?: string
   photoPublicId?: string | null
   email?: string | null

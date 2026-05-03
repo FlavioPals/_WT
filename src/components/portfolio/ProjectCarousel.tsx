@@ -42,13 +42,13 @@ export function ProjectCarousel({ images, title, location, year }: Props) {
       <div className="mx-auto flex flex-col items-center">
         {/* Imagem — mesmo tamanho do DocViewer */}
         <div className="relative w-full max-w-4xl overflow-hidden bg-[#1a1f27]">
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="sync" initial={false}>
             <motion.div
               key={current}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: EASE }}
+              exit={{ opacity: 0, position: 'absolute', inset: 0 }}
+              transition={{ duration: 0.12, ease: EASE }}
               className="relative aspect-[4/3] w-full"
             >
               <Image

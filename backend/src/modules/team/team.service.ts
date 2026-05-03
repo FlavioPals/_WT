@@ -1,5 +1,5 @@
 import type { Express } from 'express'
-import { cloudinary } from '../../config/cloudinary'
+import { deleteFromStorage } from '../../lib/upload'
 import { env } from '../../config/env'
 import { audit } from '../../lib/audit'
 import { paginationMeta, paginationSkip, type PaginatedResult } from '../../lib/pagination'
@@ -53,7 +53,7 @@ export async function createTeamMember(data: CreateTeamMemberInput, actorId: str
   await ensureSlugAvailable(slug)
 
   const member = await prisma.teamMember.create({
-    data: { ...data, slug },
+    data: { ...data, slug, photoUrl: data.photoUrl ?? '/team/sem-foto.jpg' },
   })
 
   await audit({
@@ -161,9 +161,7 @@ export async function uploadTeamMemberPhoto(
     resource_type: 'image',
   })
 
-  if (existing.photoPublicId) {
-    await cloudinary.uploader.destroy(existing.photoPublicId)
-  }
+  await deleteFromStorage(existing.photoPublicId)
 
   const updated = await prisma.teamMember.update({
     where: { id },
