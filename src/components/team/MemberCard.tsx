@@ -23,7 +23,7 @@ export function MemberCard({ member, index }: MemberCardProps) {
           alt={`Foto de ${member.name}`}
           fill
           sizes="(max-width: 1024px) 100vw, 50vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className="object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-105"
         />
       </div>
 

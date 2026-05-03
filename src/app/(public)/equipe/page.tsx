@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { MemberCard } from '@/components/team/MemberCard'
 import { getPublicTeam } from '@/lib/api/team'
 
-const TEAM_PHOTO = '/logos/foto_equipe.jpg'
+const TEAM_PHOTO = '/logos/hero_equipe.jpg'
 
 export const metadata: Metadata = {
   title: 'Equipe',
@@ -37,33 +37,35 @@ export default async function EquipePage() {
     <div className="min-h-screen">
       <section className="px-6 pt-32 lg:px-20 lg:pt-40">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-12 grid gap-8 lg:grid-cols-[1fr_420px] lg:items-end">
-            <div>
-              <p className="mb-4 text-[11px] tracking-[0.22em] text-[#EFDFBB]/50 uppercase">
-                Equipe
+          <div className="grid gap-12 lg:grid-cols-[1fr_420px] lg:items-start lg:gap-16">
+            <div className="flex flex-col justify-between gap-10 lg:py-4">
+              <div>
+                <p className="mb-4 text-[11px] tracking-[0.22em] text-[#EFDFBB]/50 uppercase">
+                  Equipe
+                </p>
+                <h1 className="font-display text-5xl leading-none font-light text-[#EFDFBB] lg:text-7xl">
+                  Pessoas que desenham espaços para outras pessoas.
+                </h1>
+              </div>
+
+              <p className="max-w-lg text-base leading-relaxed text-[#EFDFBB]/70 lg:text-lg">
+                O Studio WT combina repertórios complementares em arquitetura, interiores e gestão
+                de obra. Cada projeto nasce de uma escuta compartilhada e avança com precisão em
+                cada detalhe.
               </p>
-              <h1 className="font-display max-w-4xl text-5xl leading-none font-light text-[#EFDFBB] lg:text-7xl">
-                Pessoas que desenham espaços para outras pessoas.
-              </h1>
             </div>
 
-            <p className="text-base leading-relaxed text-[#EFDFBB]/70 lg:text-lg">
-              O Studio WT combina repertórios complementares em arquitetura, interiores e gestão de
-              obra. Cada projeto nasce de uma escuta compartilhada e avança com precisão em cada
-              detalhe.
-            </p>
-          </div>
-
-          <div className="bg-primary relative h-[62vh] min-h-[420px] overflow-hidden lg:h-[70vh]">
-            <Image
-              src={TEAM_PHOTO}
-              alt="Equipe do Studio WT Arquitetura e Design"
-              fill
-              sizes="100vw"
-              className="object-cover object-center"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+            <div className="bg-primary relative aspect-[3/4] w-full overflow-hidden">
+              <Image
+                src={TEAM_PHOTO}
+                alt="Equipe do Studio WT Arquitetura e Design"
+                fill
+                sizes="(max-width: 1024px) 100vw, 420px"
+                className="object-cover object-center grayscale"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+            </div>
           </div>
         </div>
       </section>

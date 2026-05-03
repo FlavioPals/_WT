@@ -8,6 +8,8 @@ import {
   deleteProject,
   publishProject,
   unpublishProject,
+  uploadProjectImages,
+  deleteProjectImage,
 } from '@/lib/api/projects'
 import { ApiError } from '@/lib/api-client'
 
@@ -88,4 +90,27 @@ export async function publishProjectAction(id: string, slug: string): Promise<vo
 export async function unpublishProjectAction(id: string, slug: string): Promise<void> {
   await unpublishProject(id)
   revalidate(slug)
+}
+
+export async function uploadProjectImagesAction(
+  projectId: string,
+  _state: ProjectFormState,
+  formData: FormData
+): Promise<ProjectFormState> {
+  try {
+    await uploadProjectImages(projectId, formData)
+    revalidatePath(`/dashboard/projetos/${projectId}`)
+    return { success: 'Imagem enviada.' }
+  } catch (err) {
+    return { error: extractError(err) }
+  }
+}
+
+export async function deleteProjectImageAction(imageId: string): Promise<ProjectFormState> {
+  try {
+    await deleteProjectImage(imageId)
+    return { success: 'Imagem removida.' }
+  } catch (err) {
+    return { error: extractError(err) }
+  }
 }

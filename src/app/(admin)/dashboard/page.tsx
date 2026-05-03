@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, FolderKanban, ImageIcon, Users } from 'lucide-react'
 import { getAdminProjects } from '@/lib/api/projects'
 import { getAdminTeam } from '@/lib/api/team'
+import { getAuthUser } from '@/lib/api/auth'
 
 const shortcuts = [
   {
@@ -22,10 +23,18 @@ const shortcuts = [
 ]
 
 export default async function DashboardPage() {
-  const [projectsRes, team] = await Promise.all([getAdminProjects({ limit: 100 }), getAdminTeam()])
+  const [projectsRes, team, user] = await Promise.all([
+    getAdminProjects({ limit: 100 }),
+    getAdminTeam(),
+    getAuthUser(),
+  ])
 
   const projects = projectsRes.data
-  const totalImages = projects.reduce((acc, _p) => acc, 0)
+  const totalImages = projects.reduce((acc, project) => {
+    const images = project.images
+    if (!images) return acc
+    return acc + images.gallery.length + images.technical.length + images.artistic.length
+  }, 0)
 
   const stats = [
     { label: 'Projetos cadastrados', value: projects.length, icon: FolderKanban },
@@ -38,7 +47,7 @@ export default async function DashboardPage() {
       <div className="mb-10">
         <p className="text-primary/45 mb-3 text-[11px] tracking-[0.22em] uppercase">Visão geral</p>
         <h1 className="font-display text-4xl leading-tight font-light lg:text-5xl">
-          Painel administrativo
+          {user?.name ? `Olá, ${user.name.split(' ')[0]}.` : 'Painel administrativo'}
         </h1>
       </div>
 

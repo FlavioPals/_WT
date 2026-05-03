@@ -5,13 +5,20 @@ import { adminGet, adminMutate, adminUpload, publicGet, type Pagination } from '
 export interface ProjectImage {
   id: string
   url: string
-  publicId: string
+  publicId?: string | null
   type: 'GALLERY' | 'TECHNICAL' | 'ARTISTIC' | 'COVER'
   alt: string | null
   caption: string | null
   order: number
-  width: number
-  height: number
+  width?: number | null
+  height?: number | null
+}
+
+export interface ProjectImagesByType {
+  gallery: ProjectImage[]
+  technical: ProjectImage[]
+  artistic: ProjectImage[]
+  cover: ProjectImage[]
 }
 
 export interface Project {
@@ -32,12 +39,11 @@ export interface Project {
   seoDescription: string | null
   createdAt: string
   updatedAt: string
-  images?: {
-    gallery: ProjectImage[]
-    technical: ProjectImage[]
-    artistic: ProjectImage[]
-    cover: ProjectImage[]
-  }
+  images?: ProjectImagesByType
+}
+
+type RawProject = Omit<Project, 'images'> & {
+  images?: ProjectImage[] | ProjectImagesByType
 }
 
 export interface ProjectListParams {
@@ -51,18 +57,59 @@ export interface ProjectListParams {
   deleted?: boolean
 }
 
-// ─── Public ───────────────────────────────────────────────────────────────────
+function emptyImages(): ProjectImagesByType {
+  return { gallery: [], technical: [], artistic: [], cover: [] }
+}
 
-export async function getPublicProjects(params?: ProjectListParams) {
-  return publicGet<Project[]>(
-    '/public/projects',
-    params as Record<string, string | number | boolean | undefined>
+function isGroupedImages(value: unknown): value is ProjectImagesByType {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    'gallery' in value &&
+    'technical' in value &&
+    'artistic' in value &&
+    'cover' in value
   )
 }
 
+function normalizeProject(project: RawProject): Project {
+  if (isGroupedImages(project.images)) return project as Project
+
+  const grouped = emptyImages()
+  for (const image of project.images ?? []) {
+    if (image.type === 'TECHNICAL') grouped.technical.push(image)
+    else if (image.type === 'ARTISTIC') grouped.artistic.push(image)
+    else if (image.type === 'COVER') grouped.cover.push(image)
+    else grouped.gallery.push(image)
+  }
+
+  return { ...project, images: grouped }
+}
+
+function normalizeProjectsResponse<T extends RawProject | RawProject[]>(
+  data: T
+): T extends RawProject[] ? Project[] : Project {
+  if (Array.isArray(data)) {
+    return data.map(normalizeProject) as T extends RawProject[] ? Project[] : Project
+  }
+
+  return normalizeProject(data) as T extends RawProject[] ? Project[] : Project
+}
+
+// ─── Public ───────────────────────────────────────────────────────────────────
+
+export async function getPublicProjects(params?: ProjectListParams) {
+  const res = await publicGet<RawProject[]>(
+    '/public/projects',
+    params as Record<string, string | number | boolean | undefined>
+  )
+  return { ...res, data: normalizeProjectsResponse(res.data) }
+}
+
 export async function getProjectBySlug(slug: string) {
-  const res = await publicGet<Project>(`/public/projects/${slug}`)
-  return res.data
+  const res = await publicGet<RawProject>(`/public/projects/${slug}`)
+  return normalizeProjectsResponse(res.data)
 }
 
 export function getAdjacentProjects(
@@ -80,15 +127,16 @@ export function getAdjacentProjects(
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
 export async function getAdminProjects(params?: ProjectListParams) {
-  return adminGet<Project[]>(
+  const res = await adminGet<RawProject[]>(
     '/admin/projects',
     params as Record<string, string | number | boolean | undefined>
   )
+  return { ...res, data: normalizeProjectsResponse(res.data) }
 }
 
 export async function getAdminProject(id: string) {
-  const res = await adminGet<Project>(`/admin/projects/${id}`)
-  return res.data
+  const res = await adminGet<RawProject>(`/admin/projects/${id}`)
+  return normalizeProjectsResponse(res.data)
 }
 
 export interface CreateProjectInput {
@@ -142,6 +190,10 @@ export async function uploadProjectImages(
   formData: FormData
 ): Promise<{ data: ProjectImage[] }> {
   return adminUpload<{ data: ProjectImage[] }>(`/admin/projects/${projectId}/images`, formData)
+}
+
+export async function deleteProjectImage(imageId: string): Promise<void> {
+  await adminMutate('DELETE', `/admin/project-images/${imageId}`)
 }
 
 export type { Pagination }

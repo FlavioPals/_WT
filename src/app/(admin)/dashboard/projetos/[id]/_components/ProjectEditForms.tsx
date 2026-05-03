@@ -1,13 +1,16 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { GripVertical, ImagePlus, LoaderCircle, Trash2 } from 'lucide-react'
 import type { Project } from '@/lib/api/projects'
 import {
   deleteProjectAction,
+  deleteProjectImageAction,
   publishProjectAction,
   unpublishProjectAction,
   updateProjectAction,
+  uploadProjectImagesAction,
   type ProjectFormState,
 } from '../../_actions'
 
@@ -19,6 +22,8 @@ const IMAGE_TYPES = [
   { value: 'ARTISTIC', label: 'Artística' },
 ]
 
+type ImageSectionType = 'GALLERY' | 'TECHNICAL' | 'ARTISTIC'
+
 const initialState: ProjectFormState = {}
 
 interface Props {
@@ -26,12 +31,66 @@ interface Props {
 }
 
 export function ProjectEditForms({ project }: Props) {
+  const router = useRouter()
   const boundUpdate = updateProjectAction.bind(null, project.id)
   const [state, formAction, pending] = useActionState(boundUpdate, initialState)
+
+  const [uploading, setUploading] = useState<Partial<Record<ImageSectionType, boolean>>>({})
+  const [uploadError, setUploadError] = useState<Partial<Record<ImageSectionType, string>>>({})
+  const [deleting, setDeleting] = useState<Set<string>>(new Set())
+
+  const fileInputRefs = {
+    GALLERY: useRef<HTMLInputElement>(null),
+    TECHNICAL: useRef<HTMLInputElement>(null),
+    ARTISTIC: useRef<HTMLInputElement>(null),
+  }
 
   const galleryImages = project.images?.gallery ?? []
   const technicalImages = project.images?.technical ?? []
   const artisticImages = project.images?.artistic ?? []
+
+  async function handleUpload(type: ImageSectionType, files: FileList | null) {
+    if (!files || files.length === 0) return
+
+    setUploading((prev) => ({ ...prev, [type]: true }))
+    setUploadError((prev) => ({ ...prev, [type]: undefined }))
+
+    try {
+      const formData = new FormData()
+      for (const file of Array.from(files)) {
+        formData.append('files', file)
+      }
+      formData.append('type', type)
+
+      const result = await uploadProjectImagesAction(project.id, {}, formData)
+      if (result.error) {
+        setUploadError((prev) => ({ ...prev, [type]: result.error }))
+      } else {
+        router.refresh()
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar imagem.'
+      setUploadError((prev) => ({ ...prev, [type]: msg }))
+    } finally {
+      setUploading((prev) => ({ ...prev, [type]: false }))
+      const ref = fileInputRefs[type].current
+      if (ref) ref.value = ''
+    }
+  }
+
+  async function handleDelete(imageId: string) {
+    setDeleting((prev) => new Set(prev).add(imageId))
+    try {
+      await deleteProjectImageAction(imageId)
+      router.refresh()
+    } catch {
+      setDeleting((prev) => {
+        const next = new Set(prev)
+        next.delete(imageId)
+        return next
+      })
+    }
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
@@ -139,14 +198,20 @@ export function ProjectEditForms({ project }: Props) {
           </div>
         </form>
 
-        {/* Images (read-only listing, upload handled separately) */}
+        {/* Images */}
         <div className="border-muted border p-6">
           <h2 className="font-display text-primary mb-6 text-xl font-light">Imagens</h2>
-          {[
-            { label: 'Carrossel principal', type: 'GALLERY', images: galleryImages },
-            { label: 'Imagens técnicas', type: 'TECHNICAL', images: technicalImages },
-            { label: 'Imagens artísticas', type: 'ARTISTIC', images: artisticImages },
-          ].map((section) => (
+          {(
+            [
+              { label: 'Carrossel principal', type: 'GALLERY' as const, images: galleryImages },
+              { label: 'Imagens técnicas', type: 'TECHNICAL' as const, images: technicalImages },
+              { label: 'Imagens artísticas', type: 'ARTISTIC' as const, images: artisticImages },
+            ] satisfies Array<{
+              label: string
+              type: ImageSectionType
+              images: typeof galleryImages
+            }>
+          ).map((section) => (
             <div
               key={section.type}
               className="border-muted mb-8 border-b pb-8 last:mb-0 last:border-0 last:pb-0"
@@ -157,12 +222,37 @@ export function ProjectEditForms({ project }: Props) {
                 </p>
                 <button
                   type="button"
-                  className="border-muted text-primary/60 hover:border-primary hover:text-primary inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs tracking-wide transition-colors"
+                  disabled={uploading[section.type]}
+                  onClick={() => fileInputRefs[section.type].current?.click()}
+                  className="border-muted text-primary/60 hover:border-primary hover:text-primary inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs tracking-wide transition-colors disabled:pointer-events-none disabled:opacity-50"
                 >
-                  <ImagePlus size={13} strokeWidth={1.5} aria-hidden="true" />
-                  Adicionar foto
+                  {uploading[section.type] ? (
+                    <LoaderCircle
+                      size={13}
+                      strokeWidth={1.5}
+                      className="animate-spin"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <ImagePlus size={13} strokeWidth={1.5} aria-hidden="true" />
+                  )}
+                  {uploading[section.type] ? 'Enviando…' : 'Adicionar foto'}
                 </button>
+                <input
+                  ref={fileInputRefs[section.type]}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleUpload(section.type, e.target.files)}
+                />
               </div>
+
+              {uploadError[section.type] && (
+                <p className="border-accent/30 bg-accent/5 text-accent mb-3 border px-3 py-2 text-xs">
+                  {uploadError[section.type]}
+                </p>
+              )}
 
               {section.images.length === 0 ? (
                 <div className="border-muted border border-dashed py-8 text-center">
@@ -208,9 +298,20 @@ export function ProjectEditForms({ project }: Props) {
                       <button
                         type="button"
                         aria-label="Remover imagem"
-                        className="text-primary/30 hover:text-accent shrink-0 transition-colors"
+                        disabled={deleting.has(image.id)}
+                        onClick={() => handleDelete(image.id)}
+                        className="text-primary/30 hover:text-accent shrink-0 transition-colors disabled:pointer-events-none disabled:opacity-40"
                       >
-                        <Trash2 size={15} strokeWidth={1.5} aria-hidden="true" />
+                        {deleting.has(image.id) ? (
+                          <LoaderCircle
+                            size={15}
+                            strokeWidth={1.5}
+                            className="animate-spin"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <Trash2 size={15} strokeWidth={1.5} aria-hidden="true" />
+                        )}
                       </button>
                     </div>
                   ))}
