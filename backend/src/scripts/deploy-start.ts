@@ -1,5 +1,7 @@
 import 'dotenv/config'
 import { spawnSync } from 'child_process'
+import { existsSync } from 'fs'
+import path from 'path'
 
 const REQUIRED_ENV = [
   'DATABASE_URL',
@@ -39,16 +41,25 @@ function validateDeployEnv(): void {
 
 function runMigrations(): void {
   console.log('[deploy] Running Prisma migrations...')
-  const command = process.platform === 'win32' ? 'cmd.exe' : 'npx'
-  const args =
-    process.platform === 'win32'
-      ? ['/d', '/s', '/c', 'npx prisma migrate deploy']
-      : ['prisma', 'migrate', 'deploy']
+  const prismaBin = path.resolve(process.cwd(), 'node_modules', 'prisma', 'build', 'index.js')
 
-  const result = spawnSync(command, args, {
-    stdio: 'inherit',
+  if (!existsSync(prismaBin)) {
+    console.error(`[deploy] Prisma CLI not found at ${prismaBin}.`)
+    console.error(
+      '[deploy] Make sure the "prisma" package is installed as a production dependency.'
+    )
+    process.exit(1)
+  }
+
+  console.log(`[deploy] Using Prisma CLI at ${prismaBin}`)
+
+  const result = spawnSync(process.execPath, [prismaBin, 'migrate', 'deploy'], {
+    encoding: 'utf8',
     env: process.env,
   })
+
+  if (result.stdout) process.stdout.write(result.stdout)
+  if (result.stderr) process.stderr.write(result.stderr)
 
   if (result.error) {
     console.error('[deploy] Failed to start Prisma migrate deploy:', result.error)

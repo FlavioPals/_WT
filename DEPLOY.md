@@ -114,6 +114,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 > O `prisma migrate deploy` deve rodar **toda vez** antes do start (ou no release phase). Ele aplica migrations idempotentemente — sem prompts.
 
+> Para o backend no Render, use uma `DATABASE_URL` direta e acessível pelo serviço. Se estiver usando Supabase/Neon, prefira a connection string direta para migrations; URLs de pooler/pgBouncer podem falhar no `prisma migrate deploy`.
+
 ### Render
 
 1. New → Web Service → conecte o repo.
