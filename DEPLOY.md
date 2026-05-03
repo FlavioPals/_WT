@@ -2,6 +2,31 @@
 
 Guia operacional para colocar o site em produção.
 
+## Resumo operacional deste deploy
+
+Este repositorio e publico. Nao versionar senhas, tokens, URLs reais de banco, service IDs, project refs privados, chaves de API, nem dominios temporarios que nao devem ser divulgados. Use sempre placeholders nos docs e mantenha valores reais somente nos painéis dos provedores ou em arquivos `.env` ignorados pelo Git.
+
+O deploy preparado neste projeto usa:
+
+- **Frontend**: Vercel, com o projeto apontando para a raiz do repo (`/`).
+- **Backend**: Render Web Service, com `Root Directory` em `backend`, branch `main`, Node 20 e start via `npm run deploy:start`.
+- **Banco**: Supabase Postgres via **Session Pooler**, nao via direct host `db.<PROJECT_REF>.supabase.co`, porque Render Free pode nao conseguir acessar IPv6.
+- **Migrations**: `backend/src/scripts/deploy-start.ts` so roda migrations se `RUN_MIGRATIONS_ON_START=true`; o comando separado fica em `backend/src/scripts/deploy-migrate.ts`.
+- **Seed do admin**: `backend/prisma/seed.ts`; rode somente com variaveis reais fora do Git.
+
+Arquivos importantes para entender o deploy na proxima manutencao:
+
+| Tema                     | Arquivo/local                                                 |
+| ------------------------ | ------------------------------------------------------------- |
+| Variaveis do frontend    | `.env.example`                                                |
+| Variaveis do backend     | `backend/.env.example` e `backend/src/config/env.ts`          |
+| CORS do backend          | `backend/src/app.ts` (`FRONTEND_URL`)                         |
+| Start de producao        | `backend/src/scripts/deploy-start.ts`                         |
+| Migrations de deploy     | `backend/src/scripts/deploy-migrate.ts`                       |
+| Schema e migrations      | `backend/prisma/schema.prisma` e `backend/prisma/migrations/` |
+| Seed inicial             | `backend/prisma/seed.ts`                                      |
+| Cliente HTTP do frontend | `src/lib/api-client.ts`                                       |
+
 Topologia recomendada:
 
 ```
@@ -34,12 +59,25 @@ Frontend e backend rodam **separados** e em **domínios diferentes** (ex.: `stud
    postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require
    ```
 
-   - Supabase: `Project Settings → Database → Connection string → URI` (use o **pooler** para serverless).
+   - Supabase: use **Session Pooler** quando o backend estiver no Render Free ou em outro provedor sem IPv6.
    - Neon: `Connection Details → Pooled connection`.
 
 3. Anote essa URL. Vai entrar como variável de ambiente do backend.
 
-> ⚠️ Em provedores serverless (Vercel functions, Fly machines com cold start), prefira a connection string **com pooler**. O backend usa `@prisma/adapter-pg` com `pg` — funciona com pgBouncer em modo `transaction`.
+Template seguro para Supabase Session Pooler:
+
+```env
+DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<DB_PASSWORD>@<POOLER_HOST>:5432/postgres?sslmode=require
+```
+
+Sinais de que a URL esta correta para Render Free:
+
+- O usuario tem o formato `postgres.<PROJECT_REF>`.
+- O host termina com `.pooler.supabase.com`.
+- A URL termina com `?sslmode=require`.
+- A senha real substitui `<DB_PASSWORD>` somente no painel do Render, nunca no Git.
+
+> Em Render Free + Supabase, evite a direct connection `db.<PROJECT_REF>.supabase.co:5432`, pois ela pode resolver apenas IPv6 e deixar o backend sem conexao com o banco.
 
 ---
 
@@ -113,9 +151,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | Health probe | `GET /api/v1/health`                                   |
 | Ready probe  | `GET /api/v1/ready` (usa para readiness — testa banco) |
 
-> O start de produção não roda migrations por padrão para evitar loop de boot no Render quando o banco recusa a conexão de migration. Rode `npm run deploy:migrate` no Shell do Render após o deploy, ou defina `RUN_MIGRATIONS_ON_START=true` somente quando a `DATABASE_URL` direta estiver confirmada e acessível.
+> O start de producao nao roda migrations por padrao. Isso evita loop de boot quando o banco esta com credenciais, DNS ou rede incorretos. Para rodar migrations no start, defina `RUN_MIGRATIONS_ON_START=true` temporariamente.
 
-> Para o backend no Render, use uma `DATABASE_URL` direta e acessível pelo serviço. Se estiver usando Supabase/Neon, prefira a connection string direta para migrations; URLs de pooler/pgBouncer podem falhar no `prisma migrate deploy`.
+> Se o provedor tiver Shell/one-off job, prefira rodar `npm run deploy:migrate` fora do start. No Render Free, Shell e jobs nao estao disponiveis; nesse caso use `RUN_MIGRATIONS_ON_START=true` para o primeiro deploy ou para deploys com nova migration, e remova/coloque `false` depois que o deploy ficar verde.
 
 ### Render
 
@@ -125,8 +163,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 4. Start Command: `npm run deploy:start`
 5. Health Check Path: `/api/v1/ready`
 6. Variáveis de ambiente: cole todas da lista acima.
-7. Após o deploy subir, abra o Shell do serviço e rode `npm run deploy:migrate`.
-8. (Opcional) Disco persistente não é necessário — uploads vão para Cloudinary.
+7. Se estiver no Render Free e precisar aplicar migrations, defina `RUN_MIGRATIONS_ON_START=true` temporariamente e rode **Manual Deploy**.
+8. Depois que as migrations passarem e o servico ficar live, remova `RUN_MIGRATIONS_ON_START` ou coloque `false` e rode novo deploy.
+9. (Opcional) Disco persistente não é necessário — uploads vão para Cloudinary.
 
 ### Railway
 
@@ -162,11 +201,32 @@ No `fly.toml` adicione healthcheck:
 Após o primeiro deploy bem-sucedido:
 
 ```bash
-# Render: abra "Shell" do serviço e rode:
+# Render pago/Railway/Fly com shell/job disponivel:
 npm run prisma:seed
 
 # Railway: railway run npm run prisma:seed
 # Fly:    fly ssh console -C "npm run prisma:seed"
+```
+
+No Render Free nao ha Shell. Para rodar o seed sem gravar segredo no Git, execute localmente a partir de `backend/` usando variaveis de producao somente na sessao do terminal.
+
+PowerShell:
+
+```powershell
+# Exemplo conceitual: nao cole valores reais neste arquivo.
+$env:DATABASE_URL = "<DATABASE_URL_DE_PRODUCAO>"
+$env:ADMIN_EMAIL = "<EMAIL>"
+$env:ADMIN_NAME = "<NOME>"
+$env:ADMIN_PASSWORD = "<SENHA_FORTE>"
+npm run prisma:seed
+Remove-Item Env:DATABASE_URL, Env:ADMIN_EMAIL, Env:ADMIN_NAME, Env:ADMIN_PASSWORD
+```
+
+Bash/zsh:
+
+```bash
+# Exemplo conceitual: nao cole valores reais neste arquivo.
+DATABASE_URL="<DATABASE_URL_DE_PRODUCAO>" ADMIN_EMAIL="<EMAIL>" ADMIN_NAME="<NOME>" ADMIN_PASSWORD="<SENHA_FORTE>" npm run prisma:seed
 ```
 
 O seed é idempotente (`upsert`). Pode rodar de novo sem corromper dados — só não recriará a senha se o usuário já existir.
@@ -244,6 +304,15 @@ Em produção, valide nesta ordem:
 - **Imagens órfãs no Cloudinary**: a `TASK 11.16` recomenda criar rotina manual. Por enquanto, soft-delete de imagem **não** apaga do Cloudinary; apenas exclusão definitiva (`DELETE /admin/project-images/:id/cloudinary`, restrita a `ADMIN`) faz isso.
 - **Alterar segredos**: ao trocar `JWT_ACCESS_SECRET` ou `JWT_REFRESH_SECRET`, todas as sessões ativas invalidam. Trate como operação de incident response, não como rotina.
 - **Reset de senha de admin**: SSH no backend → `npm run prisma:seed` (após ajustar `ADMIN_PASSWORD` na env) ou use `/dashboard/usuarios` se houver outro admin disponível.
+- **Segredos expostos**: se uma senha, token, connection string ou chave foi colada em chat, issue, commit, log publico ou screenshot, rotacione no provedor e atualize as variaveis de ambiente. Apagar o texto depois nao torna o segredo confiavel novamente.
+
+### Checklist anti-vazamento para repo publico
+
+- [ ] `git grep` nao encontra senhas reais, tokens, project refs privados ou hosts reais de banco.
+- [ ] `.env` e `backend/.env` nao estao versionados.
+- [ ] Docs usam `<PLACEHOLDER>` para valores sensiveis.
+- [ ] Screenshots enviados para issue/PR nao mostram secrets.
+- [ ] Variaveis reais ficam apenas em Render, Vercel, Supabase, Cloudinary e arquivos locais ignorados pelo Git.
 
 ---
 
