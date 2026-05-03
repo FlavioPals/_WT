@@ -1,4 +1,11 @@
-import { adminGet, adminMutate, adminUpload, publicGet, type Pagination } from '@/lib/api-client'
+import {
+  adminGet,
+  adminMutate,
+  adminUpload,
+  publicGet,
+  summarizeApiError,
+  type Pagination,
+} from '@/lib/api-client'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -100,11 +107,24 @@ function normalizeProjectsResponse<T extends RawProject | RawProject[]>(
 // ─── Public ───────────────────────────────────────────────────────────────────
 
 export async function getPublicProjects(params?: ProjectListParams) {
-  const res = await publicGet<RawProject[]>(
-    '/public/projects',
-    params as Record<string, string | number | boolean | undefined>
-  )
-  return { ...res, data: normalizeProjectsResponse(res.data) }
+  try {
+    const res = await publicGet<RawProject[]>(
+      '/public/projects',
+      params as Record<string, string | number | boolean | undefined>
+    )
+    return { ...res, data: normalizeProjectsResponse(res.data) }
+  } catch (error) {
+    console.warn(`[public-data] Failed to load projects: ${summarizeApiError(error)}`)
+    return {
+      data: [],
+      pagination: {
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 0,
+        total: 0,
+        totalPages: 0,
+      },
+    }
+  }
 }
 
 export async function getProjectBySlug(slug: string) {

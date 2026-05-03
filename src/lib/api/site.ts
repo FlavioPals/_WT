@@ -1,4 +1,4 @@
-import { adminGet, adminMutate, publicGet } from '@/lib/api-client'
+import { adminGet, adminMutate, publicGet, summarizeApiError } from '@/lib/api-client'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,8 +27,13 @@ export async function getSiteContent(params?: {
   group?: string
   keys?: string
 }): Promise<SiteContent[]> {
-  const res = await publicGet<SiteContent[]>('/public/site', params)
-  return res.data
+  try {
+    const res = await publicGet<SiteContent[]>('/public/site', params)
+    return res.data
+  } catch (error) {
+    console.warn(`[public-data] Failed to load site content: ${summarizeApiError(error)}`)
+    return []
+  }
 }
 
 export function getSiteContentValue(contents: SiteContent[], key: string, fallback = ''): string {

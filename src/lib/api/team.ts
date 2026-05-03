@@ -1,4 +1,4 @@
-import { adminGet, adminMutate, adminUpload, publicGet } from '@/lib/api-client'
+import { adminGet, adminMutate, adminUpload, publicGet, summarizeApiError } from '@/lib/api-client'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,8 +32,13 @@ export interface CreateTeamMemberInput {
 // ─── Public ───────────────────────────────────────────────────────────────────
 
 export async function getPublicTeam() {
-  const res = await publicGet<TeamMember[]>('/public/team', { limit: 50 })
-  return res.data
+  try {
+    const res = await publicGet<TeamMember[]>('/public/team', { limit: 50 })
+    return res.data
+  } catch (error) {
+    console.warn(`[public-data] Failed to load team members: ${summarizeApiError(error)}`)
+    return []
+  }
 }
 
 // ─── Admin ────────────────────────────────────────────────────────────────────

@@ -24,6 +24,12 @@ export class ApiError extends Error {
   }
 }
 
+export function summarizeApiError(error: unknown): string {
+  if (error instanceof ApiError) return `${error.status} ${error.code}`
+  if (error instanceof Error) return error.message
+  return 'unknown error'
+}
+
 async function parseError(res: Response): Promise<never> {
   let code = 'UNKNOWN_ERROR'
   let message = `Request failed with status ${res.status}`
