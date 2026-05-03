@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
+import { env } from '../../config/env'
 import { authenticate } from '../../middlewares/authenticate.middleware'
 import { csrf } from '../../middlewares/csrf.middleware'
 import { validate } from '../../middlewares/validate.middleware'
@@ -8,7 +9,7 @@ import { changeOwnPasswordSchema, loginSchema } from './auth.schemas'
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: env.AUTH_RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

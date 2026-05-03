@@ -29,12 +29,14 @@ Frontend e backend rodam **separados** e em **domínios diferentes** (ex.: `stud
 
 1. Crie o banco no provedor escolhido.
 2. Pegue a `DATABASE_URL` no formato:
+
    ```
    postgresql://USER:PASSWORD@HOST:PORT/DATABASE?sslmode=require
    ```
 
    - Supabase: `Project Settings → Database → Connection string → URI` (use o **pooler** para serverless).
    - Neon: `Connection Details → Pooled connection`.
+
 3. Anote essa URL. Vai entrar como variável de ambiente do backend.
 
 > ⚠️ Em provedores serverless (Vercel functions, Fly machines com cold start), prefira a connection string **com pooler**. O backend usa `@prisma/adapter-pg` com `pg` — funciona com pgBouncer em modo `transaction`.
@@ -104,9 +106,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 | Etapa        | Comando                                                |
 | ------------ | ------------------------------------------------------ |
-| Install      | `npm ci`                                               |
+| Install      | `npm ci --include=dev`                                 |
 | Build        | `npx prisma generate && npm run build`                 |
-| Start        | `npx prisma migrate deploy && node dist/server.js`     |
+| Start        | `npm run deploy:start`                                 |
 | Health probe | `GET /api/v1/health`                                   |
 | Ready probe  | `GET /api/v1/ready` (usa para readiness — testa banco) |
 
@@ -116,8 +118,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 1. New → Web Service → conecte o repo.
 2. Root Directory: `backend`.
-3. Build Command: `npm ci && npx prisma generate && npm run build`
-4. Start Command: `npx prisma migrate deploy && node dist/server.js`
+3. Build Command: `npm ci --include=dev && npx prisma generate && npm run build`
+4. Start Command: `npm run deploy:start`
 5. Health Check Path: `/api/v1/ready`
 6. Variáveis de ambiente: cole todas da lista acima.
 7. (Opcional) Disco persistente não é necessário — uploads vão para Cloudinary.
