@@ -17,19 +17,19 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
     <form action={formAction} className="grid gap-5">
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-      <label className="grid gap-2 text-sm">
+      <label className="grid gap-2 text-sm text-white">
         E-mail
         <input
           name="email"
           type="email"
           autoComplete="email"
           required
-          className="border-muted focus:border-primary h-11 border bg-white px-3 transition-colors outline-none"
+          className="border-muted focus:border-primary h-11 border bg-white px-3 text-black transition-colors outline-none"
           placeholder="admin@studiowt.com.br"
         />
       </label>
 
-      <label className="grid gap-2 text-sm">
+      <label className="grid gap-2 text-sm text-white">
         Senha
         <input
           name="password"
@@ -37,7 +37,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           autoComplete="current-password"
           required
           minLength={8}
-          className="border-muted focus:border-primary h-11 border bg-white px-3 transition-colors outline-none"
+          className="border-muted focus:border-primary h-11 border bg-white px-3 text-black transition-colors outline-none"
           placeholder="••••••••"
         />
       </label>

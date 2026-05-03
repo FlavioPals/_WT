@@ -17,18 +17,20 @@ export const swaggerSpec = {
   // ─── Security schemes ──────────────────────────────────────────────────────
   components: {
     securitySchemes: {
-      cookieAuth: {
-        type: 'apiKey',
-        in: 'cookie',
-        name: 'accessToken',
-        description: 'JWT de acesso armazenado em cookie httpOnly. Renovado via `/auth/refresh`.',
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description:
+          'JWT de acesso enviado no header `Authorization: Bearer <token>`. ' +
+          'O frontend armazena esse token em cookie httpOnly e o encaminha como Bearer nas chamadas server-side.',
       },
       csrfHeader: {
         type: 'apiKey',
         in: 'header',
         name: 'X-CSRF-Token',
         description:
-          'Token CSRF obtido em `GET /auth/csrf`. Obrigatório em todas as mutações autenticadas (POST, PATCH, PUT, DELETE) exceto `/auth/login`, `/auth/refresh` e `/auth/logout`.',
+          'Token CSRF obtido em `GET /auth/csrf`. Deve ser enviado no header `X-CSRF-Token` e no cookie `csrf_token` em mutacoes autenticadas.',
       },
     },
 
@@ -515,7 +517,7 @@ export const swaggerSpec = {
         tags: ['Auth'],
         summary: 'Obtém token CSRF',
         description:
-          'Retorna o token CSRF no body e também define o cookie `_csrf`. ' +
+          'Retorna o token CSRF no body e também define o cookie `csrf_token`. ' +
           'Deve ser chamado antes de qualquer mutação protegida.',
         operationId: 'getCsrf',
         responses: {
@@ -543,8 +545,8 @@ export const swaggerSpec = {
         tags: ['Auth'],
         summary: 'Realiza login',
         description:
-          'Autentica o usuário e define os cookies `accessToken` (httpOnly, 15min) e ' +
-          '`refreshToken` (httpOnly, 7d). Rate limit: **10 tentativas / 15 minutos**.',
+          'Autentica o usuário, retorna `accessToken` no body e define o cookie httpOnly `refresh_token`. ' +
+          'Rate limit: **10 tentativas / 15 minutos**.',
         operationId: 'login',
         requestBody: {
           required: true,
@@ -554,13 +556,19 @@ export const swaggerSpec = {
         },
         responses: {
           200: {
-            description: 'Login bem-sucedido. Cookies de sessão definidos.',
+            description: 'Login bem-sucedido. Access token retornado e refresh token definido.',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
-                    data: { $ref: '#/components/schemas/UserMe' },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        accessToken: { type: 'string' },
+                        user: { $ref: '#/components/schemas/UserMe' },
+                      },
+                    },
                     meta: { $ref: '#/components/schemas/Meta' },
                   },
                 },
@@ -578,10 +586,10 @@ export const swaggerSpec = {
         tags: ['Auth'],
         summary: 'Renova o access token',
         description:
-          'Usa o cookie `refreshToken` para emitir um novo `accessToken`. ' + 'Não requer CSRF.',
+          'Usa o cookie `refresh_token` para emitir um novo `accessToken`. ' + 'Não requer CSRF.',
         operationId: 'refresh',
         responses: {
-          200: { description: 'Token renovado. Novo cookie `accessToken` definido.' },
+          200: { description: 'Token renovado. Novo `accessToken` retornado no body.' },
           401: { $ref: '#/components/responses/Unauthorized' },
         },
       },
@@ -603,7 +611,7 @@ export const swaggerSpec = {
         summary: 'Encerra todas as sessões do usuário',
         description: 'Revoga todos os refresh tokens do usuário autenticado. Requer CSRF.',
         operationId: 'logoutAll',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         responses: {
           204: { description: 'Todas as sessões encerradas.' },
           401: { $ref: '#/components/responses/Unauthorized' },
@@ -616,7 +624,7 @@ export const swaggerSpec = {
         tags: ['Auth'],
         summary: 'Retorna dados do usuário autenticado',
         operationId: 'getMe',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         responses: {
           200: {
             description: 'Dados do usuário.',
@@ -836,7 +844,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Lista todos os projetos (admin)',
         operationId: 'listAdminProjects',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           { $ref: '#/components/parameters/PageParam' },
           { $ref: '#/components/parameters/LimitParam' },
@@ -873,7 +881,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Cria projeto',
         operationId: 'createProject',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -903,7 +911,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Reordena projetos',
         operationId: 'reorderProjects',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -923,7 +931,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Retorna projeto por ID',
         operationId: 'getAdminProject',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: {
@@ -945,7 +953,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Atualiza projeto (parcial)',
         operationId: 'updateProject',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -975,7 +983,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Deleta projeto (soft delete)',
         operationId: 'deleteProject',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Projeto removido (soft delete).' },
@@ -990,7 +998,7 @@ export const swaggerSpec = {
         tags: ['Admin · Projects'],
         summary: 'Restaura projeto deletado',
         operationId: 'restoreProject',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: { description: 'Projeto restaurado.' },
@@ -1006,7 +1014,7 @@ export const swaggerSpec = {
         summary: 'Publica projeto',
         description: 'Muda o status de DRAFT/ARCHIVED para PUBLISHED.',
         operationId: 'publishProject',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: { description: 'Projeto publicado.' },
@@ -1022,7 +1030,7 @@ export const swaggerSpec = {
         summary: 'Despublica projeto',
         description: 'Muda o status de PUBLISHED para DRAFT.',
         operationId: 'unpublishProject',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: { description: 'Projeto despublicado.' },
@@ -1039,7 +1047,7 @@ export const swaggerSpec = {
         tags: ['Admin · Images'],
         summary: 'Lista imagens de um projeto',
         operationId: 'listProjectImages',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           { in: 'path', name: 'projectId', required: true, schema: { type: 'string' } },
           {
@@ -1074,7 +1082,7 @@ export const swaggerSpec = {
           'Formatos aceitos: JPEG, PNG, WebP. Tamanho máximo configurável via `UPLOAD_MAX_FILE_SIZE_MB` (default: 8 MB). ' +
           'Requer roles: **ADMIN** ou **ARCHITECT**.',
         operationId: 'uploadProjectImages',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'projectId', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1136,7 +1144,7 @@ export const swaggerSpec = {
         tags: ['Admin · Images'],
         summary: 'Reordena imagens do projeto',
         operationId: 'reorderProjectImages',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'projectId', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1157,7 +1165,7 @@ export const swaggerSpec = {
         tags: ['Admin · Images'],
         summary: 'Define imagem de capa do projeto',
         operationId: 'setProjectCover',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'projectId', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1190,7 +1198,7 @@ export const swaggerSpec = {
         tags: ['Admin · Images'],
         summary: 'Retorna imagem por ID',
         operationId: 'getProjectImage',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [{ in: 'path', name: 'imageId', required: true, schema: { type: 'string' } }],
         responses: {
           200: {
@@ -1212,7 +1220,7 @@ export const swaggerSpec = {
         tags: ['Admin · Images'],
         summary: 'Atualiza metadados da imagem',
         operationId: 'updateProjectImage',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'imageId', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1231,7 +1239,7 @@ export const swaggerSpec = {
         tags: ['Admin · Images'],
         summary: 'Remove imagem (soft delete)',
         operationId: 'deleteProjectImage',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'imageId', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Imagem removida do banco (mantida no Cloudinary).' },
@@ -1248,7 +1256,7 @@ export const swaggerSpec = {
         description:
           'Requer role **ADMIN**. Deleta o asset no Cloudinary e remove o registro do banco.',
         operationId: 'hardDeleteProjectImage',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'imageId', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Imagem deletada permanentemente.' },
@@ -1265,7 +1273,7 @@ export const swaggerSpec = {
         tags: ['Admin · Team'],
         summary: 'Lista membros da equipe (admin)',
         operationId: 'listAdminTeam',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           { $ref: '#/components/parameters/PageParam' },
           { $ref: '#/components/parameters/LimitParam' },
@@ -1300,7 +1308,7 @@ export const swaggerSpec = {
         tags: ['Admin · Team'],
         summary: 'Cria membro da equipe',
         operationId: 'createTeamMember',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1332,7 +1340,7 @@ export const swaggerSpec = {
         tags: ['Admin · Team'],
         summary: 'Reordena membros da equipe',
         operationId: 'reorderTeam',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1351,7 +1359,7 @@ export const swaggerSpec = {
         tags: ['Admin · Team'],
         summary: 'Retorna membro por ID',
         operationId: 'getAdminTeamMember',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: {
@@ -1373,7 +1381,7 @@ export const swaggerSpec = {
         tags: ['Admin · Team'],
         summary: 'Atualiza membro (parcial)',
         operationId: 'updateTeamMember',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1400,7 +1408,7 @@ export const swaggerSpec = {
         tags: ['Admin · Team'],
         summary: 'Remove membro (soft delete)',
         operationId: 'deleteTeamMember',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Membro removido.' },
@@ -1419,7 +1427,7 @@ export const swaggerSpec = {
           'Formatos aceitos: JPEG, PNG, WebP. Tamanho máximo: `UPLOAD_MAX_FILE_SIZE_MB` (default 8 MB). ' +
           'A imagem é enviada para o Cloudinary e a URL é salva no membro.',
         operationId: 'uploadTeamMemberPhoto',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1455,7 +1463,7 @@ export const swaggerSpec = {
         tags: ['Admin · Site Content'],
         summary: 'Lista conteúdos do site (admin)',
         operationId: 'listAdminSiteContent',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           { in: 'query', name: 'group', schema: { type: 'string', example: 'home' } },
           { in: 'query', name: 'type', schema: { $ref: '#/components/schemas/SiteContentType' } },
@@ -1484,7 +1492,7 @@ export const swaggerSpec = {
         summary: 'Atualiza múltiplos conteúdos em lote',
         description: 'Limite: **100 itens por requisição**.',
         operationId: 'bulkUpdateSiteContent',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1506,7 +1514,7 @@ export const swaggerSpec = {
         tags: ['Admin · Site Content'],
         summary: 'Retorna conteúdo por chave',
         operationId: 'getAdminSiteContent',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             in: 'path',
@@ -1535,7 +1543,7 @@ export const swaggerSpec = {
         tags: ['Admin · Site Content'],
         summary: 'Atualiza conteúdo por chave (substituição completa)',
         operationId: 'updateSiteContent',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [
           {
             in: 'path',
@@ -1569,7 +1577,7 @@ export const swaggerSpec = {
           'Upload multipart de **1 arquivo** (campo `image`). ' +
           'Após o upload, o campo `value` do conteúdo é atualizado com a URL do Cloudinary.',
         operationId: 'uploadSiteContentImage',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [
           {
             in: 'path',
@@ -1615,7 +1623,7 @@ export const swaggerSpec = {
         tags: ['Admin · Media'],
         summary: 'Lista assets de mídia',
         operationId: 'listMediaAssets',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           { $ref: '#/components/parameters/PageParam' },
           {
@@ -1661,7 +1669,7 @@ export const swaggerSpec = {
           'Upload multipart de até **20 arquivos** (campo `files`). ' +
           'Formatos aceitos: JPEG, PNG, WebP. Limite por arquivo: `UPLOAD_MAX_FILE_SIZE_MB` (default 8 MB).',
         operationId: 'uploadMediaAssets',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1713,7 +1721,7 @@ export const swaggerSpec = {
         tags: ['Admin · Media'],
         summary: 'Retorna asset por ID',
         operationId: 'getMediaAsset',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: {
@@ -1735,7 +1743,7 @@ export const swaggerSpec = {
         tags: ['Admin · Media'],
         summary: 'Atualiza metadados do asset',
         operationId: 'updateMediaAsset',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1761,7 +1769,7 @@ export const swaggerSpec = {
         tags: ['Admin · Media'],
         summary: 'Remove asset (soft delete)',
         operationId: 'deleteMediaAsset',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Asset marcado como deletado.' },
@@ -1777,7 +1785,7 @@ export const swaggerSpec = {
         summary: 'Remove asset permanentemente (Cloudinary + banco)',
         description: 'Requer role **ADMIN**.',
         operationId: 'hardDeleteMediaAsset',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Asset deletado permanentemente.' },
@@ -1795,7 +1803,7 @@ export const swaggerSpec = {
         summary: 'Lista usuários',
         description: 'Requer role **ADMIN**.',
         operationId: 'listUsers',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [
           { $ref: '#/components/parameters/PageParam' },
           {
@@ -1851,7 +1859,7 @@ export const swaggerSpec = {
         description:
           'Requer role **ADMIN**. Se `temporaryPassword` for omitido, é gerado automaticamente.',
         operationId: 'createUser',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1887,7 +1895,7 @@ export const swaggerSpec = {
         tags: ['Admin · Users'],
         summary: 'Retorna usuário por ID',
         operationId: 'getUser',
-        security: [{ cookieAuth: [] }],
+        security: [{ bearerAuth: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           200: {
@@ -1910,7 +1918,7 @@ export const swaggerSpec = {
         tags: ['Admin · Users'],
         summary: 'Atualiza usuário (parcial)',
         operationId: 'updateUser',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
           required: true,
@@ -1931,7 +1939,7 @@ export const swaggerSpec = {
         summary: 'Remove usuário (soft delete)',
         description: 'Não é possível remover o último ADMIN ativo.',
         operationId: 'deleteUser',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Usuário removido.' },
@@ -1950,7 +1958,7 @@ export const swaggerSpec = {
           'Gera (ou aceita) uma senha temporária e revoga todas as sessões do usuário. ' +
           'Requer role **ADMIN**.',
         operationId: 'resetUserPassword',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         requestBody: {
           content: {
@@ -1971,7 +1979,7 @@ export const swaggerSpec = {
         summary: 'Revoga todas as sessões do usuário',
         description: 'Requer role **ADMIN**.',
         operationId: 'revokeUserSessions',
-        security: [{ cookieAuth: [], csrfHeader: [] }],
+        security: [{ bearerAuth: [], csrfHeader: [] }],
         parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: {
           204: { description: 'Sessões revogadas.' },

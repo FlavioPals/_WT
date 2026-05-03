@@ -1,4 +1,4 @@
-import { PROJECTS, type Project } from '@/lib/projects'
+import type { Project } from '@/lib/api/projects'
 import { absoluteUrl, SITE_CONTACT, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
 
 export function localBusinessJsonLd() {
@@ -32,7 +32,7 @@ export function localBusinessJsonLd() {
   }
 }
 
-export function portfolioCollectionJsonLd() {
+export function portfolioCollectionJsonLd(projects: Pick<Project, 'slug' | 'title'>[] = []) {
   return {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -41,7 +41,7 @@ export function portfolioCollectionJsonLd() {
     description: 'Galeria de projetos residenciais, corporativos e de interiores do Studio WT.',
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: PROJECTS.map((project, index) => ({
+      itemListElement: projects.map((project, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         url: absoluteUrl(`/portfolio/${project.slug}`),
@@ -51,16 +51,35 @@ export function portfolioCollectionJsonLd() {
   }
 }
 
-export function projectImageGalleryJsonLd(project: Project) {
+interface GalleryImage {
+  src?: string
+  url?: string
+  alt?: string | null
+}
+
+interface GalleryProject {
+  title: string
+  slug: string
+  description: string | string[]
+  images?: GalleryImage[]
+  location?: string | null
+  year?: number | null
+}
+
+export function projectImageGalleryJsonLd(project: GalleryProject) {
+  const description = Array.isArray(project.description)
+    ? project.description.join(' ')
+    : project.description
+
   return {
     '@context': 'https://schema.org',
     '@type': 'ImageGallery',
     name: `${project.title} | ${SITE_NAME}`,
     url: absoluteUrl(`/portfolio/${project.slug}`),
-    description: project.description.join(' '),
-    image: project.images.map((image) => ({
+    description,
+    image: (project.images ?? []).map((image) => ({
       '@type': 'ImageObject',
-      url: absoluteUrl(image.src),
+      url: absoluteUrl(image.src ?? image.url ?? ''),
       caption: image.alt,
     })),
     about: {

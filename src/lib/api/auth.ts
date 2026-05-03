@@ -1,17 +1,15 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
-import { API_BASE } from '@/lib/api-client'
+import { ACCESS_TOKEN_COOKIE, API_BASE, REFRESH_TOKEN_COOKIE } from '@/lib/api-client'
 
 export interface AuthUser {
   id: string
   email: string
   name: string
   role: 'ADMIN' | 'ARCHITECT' | 'EDITOR'
-  active: boolean
+  active?: boolean
 }
-
-// ─── login ────────────────────────────────────────────────────────────────────
 
 export interface LoginResult {
   user: AuthUser
@@ -21,6 +19,50 @@ export interface LoginResult {
 export interface LoginError {
   user?: never
   error: string
+}
+
+interface AuthPayload {
+  accessToken: string
+  user: AuthUser
+}
+
+function getSetCookies(headers: Headers): string[] {
+  const headersWithSetCookie = headers as Headers & { getSetCookie?: () => string[] }
+  if (typeof headersWithSetCookie.getSetCookie === 'function') {
+    return headersWithSetCookie.getSetCookie()
+  }
+
+  const cookie = headers.get('set-cookie')
+  return cookie ? [cookie] : []
+}
+
+function parseCookieHeader(raw: string) {
+  const [nameValue, ...attrs] = raw.split(';').map((s) => s.trim())
+  const eqIdx = nameValue.indexOf('=')
+  if (eqIdx === -1) return null
+
+  const options: Parameters<Awaited<ReturnType<typeof cookies>>['set']>[2] = {
+    httpOnly: true,
+    path: '/',
+  }
+
+  for (const attr of attrs) {
+    const lower = attr.toLowerCase()
+    if (lower === 'httponly') options.httpOnly = true
+    else if (lower === 'secure') options.secure = true
+    else if (lower.startsWith('samesite=')) {
+      options.sameSite = lower.split('=')[1] as 'lax' | 'strict' | 'none'
+    } else if (lower.startsWith('max-age=')) {
+      const maxAge = Number.parseInt(attr.split('=')[1] ?? '', 10)
+      if (Number.isFinite(maxAge)) options.maxAge = maxAge
+    }
+  }
+
+  return {
+    name: nameValue.slice(0, eqIdx),
+    value: nameValue.slice(eqIdx + 1),
+    options,
+  }
 }
 
 export async function callExpressLogin(
@@ -37,74 +79,66 @@ export async function callExpressLogin(
       cache: 'no-store',
     })
   } catch {
-    return { error: 'Serviço indisponível. Tente novamente.' }
+    return { error: 'Servico indisponivel. Tente novamente.' }
   }
 
   if (!res.ok) {
-    return { error: 'E-mail ou senha inválidos.' }
+    return { error: 'E-mail ou senha invalidos.' }
   }
 
-  // Forward Express JWT cookies to the browser
+  const body = (await res.json()) as { data: AuthPayload }
   const cookieStore = await cookies()
-  for (const raw of res.headers.getSetCookie()) {
-    const [nameValue, ...attrs] = raw.split(';').map((s) => s.trim())
-    const eqIdx = nameValue.indexOf('=')
-    const name = nameValue.slice(0, eqIdx)
-    const value = nameValue.slice(eqIdx + 1)
 
-    const options: Parameters<typeof cookieStore.set>[2] = {}
-    for (const attr of attrs) {
-      const lower = attr.toLowerCase()
-      if (lower === 'httponly') options.httpOnly = true
-      else if (lower === 'secure') options.secure = true
-      else if (lower.startsWith('samesite='))
-        options.sameSite = lower.split('=')[1] as 'lax' | 'strict' | 'none'
-      else if (lower.startsWith('path=')) options.path = attr.split('=')[1]
-      else if (lower.startsWith('max-age=')) options.maxAge = parseInt(attr.split('=')[1])
+  cookieStore.set(ACCESS_TOKEN_COOKIE, body.data.accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 15 * 60,
+    path: '/',
+  })
+
+  for (const raw of getSetCookies(res.headers)) {
+    const parsed = parseCookieHeader(raw)
+    if (parsed?.name === REFRESH_TOKEN_COOKIE) {
+      cookieStore.set(parsed.name, parsed.value, parsed.options)
     }
-
-    cookieStore.set(name, value, options)
   }
 
-  const body = (await res.json()) as { data: AuthUser }
-  return { user: body.data }
+  return { user: body.data.user }
 }
-
-// ─── logout ───────────────────────────────────────────────────────────────────
 
 export async function callExpressLogout(): Promise<void> {
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get('accessToken')?.value
+  const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value
 
-  if (accessToken) {
+  if (refreshToken) {
     await fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',
-      headers: { Cookie: `accessToken=${accessToken}` },
+      headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}` },
       cache: 'no-store',
     }).catch(() => {})
   }
 
-  cookieStore.delete('accessToken')
+  cookieStore.delete(ACCESS_TOKEN_COOKIE)
+  cookieStore.delete(REFRESH_TOKEN_COOKIE)
   cookieStore.delete('refreshToken')
 }
 
-// ─── me ───────────────────────────────────────────────────────────────────────
-
 export async function getAuthUser(): Promise<AuthUser | null> {
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get('accessToken')?.value
+  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value
 
   if (!accessToken) return null
 
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
-      headers: { Cookie: `accessToken=${accessToken}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
       cache: 'no-store',
     })
 
     if (!res.ok) return null
-    const body = (await res.json()) as { data: AuthUser }
-    return body.data
+    const body = (await res.json()) as { data: { user: AuthUser } | AuthUser }
+    return 'user' in body.data ? body.data.user : body.data
   } catch {
     return null
   }

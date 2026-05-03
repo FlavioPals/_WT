@@ -20,18 +20,19 @@ export async function updateSiteContentAction(
   formData: FormData
 ): Promise<ContentFormState> {
   const items = [
-    { key: 'home:manifesto', value: (formData.get('manifesto') as string) ?? '' },
-    { key: 'sobre:about', value: (formData.get('about') as string) ?? '' },
-    { key: 'contato:phone', value: (formData.get('contactPhone') as string) ?? '' },
-    { key: 'contato:email', value: (formData.get('contactEmail') as string) ?? '' },
-    { key: 'contato:city', value: (formData.get('contactCity') as string) ?? '' },
-    { key: 'contato:instagram', value: (formData.get('instagram') as string) ?? '' },
+    { key: 'home_manifesto_body', value: (formData.get('manifesto') as string) ?? '' },
+    { key: 'about_intro', value: (formData.get('about') as string) ?? '' },
+    { key: 'contact_phone', value: (formData.get('contactPhone') as string) ?? '' },
+    { key: 'contact_email', value: (formData.get('contactEmail') as string) ?? '' },
+    { key: 'contact_city', value: (formData.get('contactCity') as string) ?? '' },
+    { key: 'contact_instagram', value: (formData.get('instagram') as string) ?? '' },
   ]
 
   try {
     await bulkUpdateSiteContent(items)
     revalidatePath('/')
     revalidatePath('/sobre')
+    revalidatePath('/', 'layout')
     revalidatePath('/dashboard/conteudo')
     return { success: 'Conteúdo salvo.' }
   } catch (err) {

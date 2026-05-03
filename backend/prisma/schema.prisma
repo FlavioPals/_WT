@@ -7,7 +7,160 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Enums ────────────────────────────────────────────────────────────────────
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  name            String
+  password        String
+  role            Role           @default(ARCHITECT)
+  active          Boolean        @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
+  auditLogs       AuditLog[]
+  mediaCreated    MediaAsset[]
+  projectsCreated Project[]      @relation("ProjectCreatedBy")
+  projectsUpdated Project[]      @relation("ProjectUpdatedBy")
+  imagesCreated   ProjectImage[]
+  refreshTokens   RefreshToken[]
+  contentUpdated  SiteContent[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Project {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  title          String
+  concept        String?
+  description    String
+  year           Int?
+  location       String?
+  area           String?
+  category       String?
+  coverImage     String?
+  status         ProjectStatus  @default(DRAFT)
+  featured       Boolean        @default(false)
+  order          Int            @default(0)
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+  createdBy      User?          @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+  updatedBy      User?          @relation("ProjectUpdatedBy", fields: [updatedById], references: [id])
+  images         ProjectImage[]
+
+  @@index([status, deletedAt])
+  @@index([slug])
+}
+
+model ProjectImage {
+  id            String           @id @default(cuid())
+  url           String
+  publicId      String?
+  alt           String?
+  caption       String?
+  type          ProjectImageType @default(GALLERY)
+  order         Int              @default(0)
+  width         Int?
+  height        Int?
+  format        String?
+  bytes         Int?
+  dominantColor String?
+  createdById   String?
+  projectId     String
+  createdAt     DateTime         @default(now())
+  deletedAt     DateTime?
+  createdBy     User?            @relation(fields: [createdById], references: [id])
+  project       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, type, deletedAt])
+}
+
+model TeamMember {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  role          String
+  bio           String
+  photoUrl      String
+  photoPublicId String?
+  email         String?
+  instagramUrl  String?
+  linkedinUrl   String?
+  active        Boolean   @default(true)
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+}
+
+model SiteContent {
+  id          String          @id @default(cuid())
+  key         String          @unique
+  value       String
+  label       String?
+  type        SiteContentType @default(TEXT)
+  group       String?
+  description String?
+  metadata    Json?
+  updatedById String?
+  updatedAt   DateTime        @updatedAt
+  updatedBy   User?           @relation(fields: [updatedById], references: [id])
+
+  @@index([group])
+}
+
+model MediaAsset {
+  id          String    @id @default(cuid())
+  url         String
+  publicId    String
+  folder      String?
+  alt         String?
+  caption     String?
+  mimeType    String?
+  width       Int?
+  height      Int?
+  bytes       Int?
+  createdById String?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  createdBy   User?     @relation(fields: [createdById], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([actorId])
+}
 
 enum Role {
   ADMIN
@@ -36,168 +189,4 @@ enum SiteContentType {
   URL
   EMAIL
   PHONE
-}
-
-// ─── Models ───────────────────────────────────────────────────────────────────
-
-model User {
-  id          String    @id @default(cuid())
-  email       String    @unique
-  name        String
-  password    String
-  role        Role      @default(ARCHITECT)
-  active      Boolean   @default(true)
-  lastLoginAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-
-  refreshTokens   RefreshToken[]
-  projectsCreated Project[]      @relation("ProjectCreatedBy")
-  projectsUpdated Project[]      @relation("ProjectUpdatedBy")
-  imagesCreated   ProjectImage[]
-  mediaCreated    MediaAsset[]
-  contentUpdated  SiteContent[]
-  auditLogs       AuditLog[]
-}
-
-model RefreshToken {
-  id        String    @id @default(cuid())
-  tokenHash String
-  userAgent String?
-  ip        String?
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  userId    String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model Project {
-  id             String        @id @default(cuid())
-  slug           String        @unique
-  title          String
-  concept        String?       @db.Text
-  description    String        @db.Text
-  year           Int?
-  location       String?
-  area           String?
-  category       String?
-  coverImage     String?
-  status         ProjectStatus @default(DRAFT)
-  featured       Boolean       @default(false)
-  order          Int           @default(0)
-  publishedAt    DateTime?
-  seoTitle       String?
-  seoDescription String?
-  createdById    String?
-  updatedById    String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime?
-
-  images    ProjectImage[]
-  createdBy User?          @relation("ProjectCreatedBy", fields: [createdById], references: [id])
-  updatedBy User?          @relation("ProjectUpdatedBy", fields: [updatedById], references: [id])
-
-  @@index([status, deletedAt])
-  @@index([slug])
-}
-
-model ProjectImage {
-  id            String           @id @default(cuid())
-  url           String
-  publicId      String?
-  alt           String?
-  caption       String?
-  type          ProjectImageType @default(GALLERY)
-  order         Int              @default(0)
-  width         Int?
-  height        Int?
-  format        String?
-  bytes         Int?
-  dominantColor String?
-  createdById   String?
-  projectId     String
-  createdAt     DateTime         @default(now())
-  deletedAt     DateTime?
-
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy User?   @relation(fields: [createdById], references: [id])
-
-  @@index([projectId, type, deletedAt])
-}
-
-model TeamMember {
-  id            String    @id @default(cuid())
-  slug          String    @unique
-  name          String
-  role          String
-  bio           String    @db.Text
-  photoUrl      String
-  photoPublicId String?
-  email         String?
-  instagramUrl  String?
-  linkedinUrl   String?
-  active        Boolean   @default(true)
-  order         Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-}
-
-model SiteContent {
-  id          String          @id @default(cuid())
-  key         String          @unique
-  value       String          @db.Text
-  label       String?
-  type        SiteContentType @default(TEXT)
-  group       String?
-  description String?
-  metadata    Json?
-  updatedById String?
-  updatedAt   DateTime        @updatedAt
-
-  updatedBy User? @relation(fields: [updatedById], references: [id])
-
-  @@index([group])
-}
-
-model MediaAsset {
-  id          String    @id @default(cuid())
-  url         String
-  publicId    String
-  folder      String?
-  alt         String?
-  caption     String?
-  mimeType    String?
-  width       Int?
-  height      Int?
-  bytes       Int?
-  createdById String?
-  createdAt   DateTime  @default(now())
-  deletedAt   DateTime?
-
-  createdBy User? @relation(fields: [createdById], references: [id])
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  entity    String
-  entityId  String?
-  before    Json?
-  after     Json?
-  ip        String?
-  userAgent String?
-  createdAt DateTime @default(now())
-  actorId   String?
-
-  actor User? @relation(fields: [actorId], references: [id])
-
-  @@index([entity, entityId])
-  @@index([actorId])
 }

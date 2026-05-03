@@ -2,7 +2,13 @@ import 'server-only'
 
 import { cookies } from 'next/headers'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1'
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1').replace(
+  /\/$/,
+  ''
+)
+export const ACCESS_TOKEN_COOKIE = 'accessToken'
+export const REFRESH_TOKEN_COOKIE = 'refresh_token'
+export const CSRF_COOKIE = 'csrf_token'
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 
@@ -70,18 +76,25 @@ export async function publicGet<T>(
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
-async function getAuthCookie(): Promise<string> {
+async function getAccessToken(): Promise<string> {
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get('accessToken')?.value
+  const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value
   if (!accessToken) throw new ApiError(401, 'UNAUTHENTICATED', 'Not authenticated')
   return accessToken
 }
 
-async function fetchCsrf(accessToken: string): Promise<{ csrfToken: string; csrfCookie: string }> {
-  const res = await fetch(`${API_BASE}/auth/csrf`, {
-    headers: { Cookie: `accessToken=${accessToken}` },
-    cache: 'no-store',
-  })
+function getSetCookies(headers: Headers): string[] {
+  const headersWithSetCookie = headers as Headers & { getSetCookie?: () => string[] }
+  if (typeof headersWithSetCookie.getSetCookie === 'function') {
+    return headersWithSetCookie.getSetCookie()
+  }
+
+  const cookie = headers.get('set-cookie')
+  return cookie ? [cookie] : []
+}
+
+async function fetchCsrf(): Promise<{ csrfToken: string; csrfCookie: string }> {
+  const res = await fetch(`${API_BASE}/auth/csrf`, { cache: 'no-store' })
 
   if (!res.ok) throw new ApiError(401, 'CSRF_FAILED', 'Failed to obtain CSRF token')
 
@@ -89,12 +102,14 @@ async function fetchCsrf(accessToken: string): Promise<{ csrfToken: string; csrf
   const csrfToken = body.data.csrfToken
 
   let csrfCookie = ''
-  for (const cookie of res.headers.getSetCookie()) {
-    if (cookie.startsWith('_csrf=')) {
+  for (const cookie of getSetCookies(res.headers)) {
+    if (cookie.startsWith(`${CSRF_COOKIE}=`)) {
       csrfCookie = cookie.split(';')[0]
       break
     }
   }
+
+  if (!csrfCookie) csrfCookie = `${CSRF_COOKIE}=${csrfToken}`
 
   return { csrfToken, csrfCookie }
 }
@@ -105,7 +120,7 @@ export async function adminGet<T>(
   path: string,
   params?: Record<string, string | number | boolean | undefined>
 ): Promise<ApiResponse<T>> {
-  const accessToken = await getAuthCookie()
+  const accessToken = await getAccessToken()
   const url = new URL(`${API_BASE}${path}`)
 
   if (params) {
@@ -115,7 +130,7 @@ export async function adminGet<T>(
   }
 
   const res = await fetch(url.toString(), {
-    headers: { Cookie: `accessToken=${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
     cache: 'no-store',
   })
 
@@ -130,14 +145,15 @@ export async function adminMutate<T>(
   path: string,
   body?: unknown
 ): Promise<T | null> {
-  const accessToken = await getAuthCookie()
-  const { csrfToken, csrfCookie } = await fetchCsrf(accessToken)
+  const accessToken = await getAccessToken()
+  const { csrfToken, csrfCookie } = await fetchCsrf()
 
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      Cookie: `accessToken=${accessToken}; ${csrfCookie}`,
+      Authorization: `Bearer ${accessToken}`,
+      Cookie: csrfCookie,
       'X-CSRF-Token': csrfToken,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -152,13 +168,14 @@ export async function adminMutate<T>(
 // ─── Multipart upload (server-only, with CSRF) ───────────────────────────────
 
 export async function adminUpload<T>(path: string, formData: FormData): Promise<T> {
-  const accessToken = await getAuthCookie()
-  const { csrfToken, csrfCookie } = await fetchCsrf(accessToken)
+  const accessToken = await getAccessToken()
+  const { csrfToken, csrfCookie } = await fetchCsrf()
 
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: {
-      Cookie: `accessToken=${accessToken}; ${csrfCookie}`,
+      Authorization: `Bearer ${accessToken}`,
+      Cookie: csrfCookie,
       'X-CSRF-Token': csrfToken,
     },
     body: formData,

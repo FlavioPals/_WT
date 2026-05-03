@@ -19,6 +19,7 @@ export function errorMiddleware(
   res: Response,
   _next: NextFunction
 ): void {
+  void _next
   const meta = { requestId: req.requestId, timestamp: new Date().toISOString() }
   const maybeMulterError = err as Error & { code?: string; field?: string }
 

@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Eye, GripVertical, Pencil, Plus } from 'lucide-react'
+import { Eye, GripVertical, Pencil } from 'lucide-react'
 import { getAdminProjects } from '@/lib/api/projects'
 import { ProjectCreateForm } from './_components/ProjectCreateForm'
 

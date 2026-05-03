@@ -16,7 +16,7 @@ const SITE_CONTENT_DEFAULTS: Array<{
 }> = [
   {
     key: 'home_manifesto_title',
-    value: 'Arquitetura que transforma espaços em experiências.',
+    value: 'Design que acolhe, inspira e transforma.',
     label: 'Manifesto — Título',
     type: SiteContentType.TEXT,
     group: 'home',
@@ -63,7 +63,7 @@ const SITE_CONTENT_DEFAULTS: Array<{
   },
   {
     key: 'about_stats_founded',
-    value: '2015',
+    value: '2022',
     label: 'Sobre — Ano de fundação',
     type: SiteContentType.TEXT,
     group: 'about',
@@ -77,7 +77,7 @@ const SITE_CONTENT_DEFAULTS: Array<{
   },
   {
     key: 'about_stats_team',
-    value: '6',
+    value: '3',
     label: 'Sobre — Tamanho da equipe',
     type: SiteContentType.TEXT,
     group: 'about',

@@ -59,7 +59,7 @@ export function ContactForm() {
         <div className="grid gap-2">
           <label
             htmlFor={nameId}
-            className="text-[11px] tracking-[0.18em] text-[#EFDFBB]/45 uppercase"
+            className="text-primary/45 text-[11px] tracking-[0.18em] uppercase"
           >
             Nome
           </label>
@@ -71,7 +71,7 @@ export function ContactForm() {
             required
             minLength={2}
             maxLength={120}
-            className="border border-[#EFDFBB]/15 bg-transparent px-3 py-3 text-sm text-[#EFDFBB] transition-colors outline-none placeholder:text-[#EFDFBB]/25 focus:border-[#EFDFBB]/55"
+            className="border-primary/15 text-primary placeholder:text-primary/25 focus:border-primary/55 border bg-transparent px-3 py-2 text-sm transition-colors outline-none"
             placeholder="Seu nome"
           />
         </div>
@@ -79,7 +79,7 @@ export function ContactForm() {
         <div className="grid gap-2">
           <label
             htmlFor={emailId}
-            className="text-[11px] tracking-[0.18em] text-[#EFDFBB]/45 uppercase"
+            className="text-primary/45 text-[11px] tracking-[0.18em] uppercase"
           >
             E-mail
           </label>
@@ -90,7 +90,7 @@ export function ContactForm() {
             autoComplete="email"
             required
             maxLength={254}
-            className="border border-[#EFDFBB]/15 bg-transparent px-3 py-3 text-sm text-[#EFDFBB] transition-colors outline-none placeholder:text-[#EFDFBB]/25 focus:border-[#EFDFBB]/55"
+            className="border-primary/15 text-primary placeholder:text-primary/25 focus:border-primary/55 border bg-transparent px-3 py-2 text-sm transition-colors outline-none"
             placeholder="voce@email.com"
           />
         </div>
@@ -99,7 +99,7 @@ export function ContactForm() {
       <div className="grid gap-2">
         <label
           htmlFor={phoneId}
-          className="text-[11px] tracking-[0.18em] text-[#EFDFBB]/45 uppercase"
+          className="text-primary/45 text-[11px] tracking-[0.18em] uppercase"
         >
           Telefone
         </label>
@@ -109,7 +109,7 @@ export function ContactForm() {
           type="tel"
           autoComplete="tel"
           maxLength={30}
-          className="border border-[#EFDFBB]/15 bg-transparent px-3 py-3 text-sm text-[#EFDFBB] transition-colors outline-none placeholder:text-[#EFDFBB]/25 focus:border-[#EFDFBB]/55"
+          className="border-primary/15 text-primary placeholder:text-primary/25 focus:border-primary/55 border bg-transparent px-3 py-2 text-sm transition-colors outline-none"
           placeholder="+55 (11) 99999-9999"
         />
       </div>
@@ -117,7 +117,7 @@ export function ContactForm() {
       <div className="grid gap-2">
         <label
           htmlFor={messageId}
-          className="text-[11px] tracking-[0.18em] text-[#EFDFBB]/45 uppercase"
+          className="text-primary/45 text-[11px] tracking-[0.18em] uppercase"
         >
           Mensagem
         </label>
@@ -127,8 +127,8 @@ export function ContactForm() {
           required
           minLength={10}
           maxLength={3000}
-          rows={5}
-          className="resize-none border border-[#EFDFBB]/15 bg-transparent px-3 py-3 text-sm leading-relaxed text-[#EFDFBB] transition-colors outline-none placeholder:text-[#EFDFBB]/25 focus:border-[#EFDFBB]/55"
+          rows={3}
+          className="border-primary/15 text-primary placeholder:text-primary/25 focus:border-primary/55 resize-none border bg-transparent px-3 py-2 text-sm leading-relaxed transition-colors outline-none"
           placeholder="Conte um pouco sobre o projeto"
         />
       </div>
@@ -142,13 +142,13 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={status === 'submitting'}
-          className="hover:text-primary inline-flex min-h-11 items-center justify-center gap-2 border border-[#EFDFBB]/35 px-5 text-sm tracking-[0.16em] text-[#EFDFBB] uppercase transition-colors hover:border-[#EFDFBB] hover:bg-[#EFDFBB] disabled:pointer-events-none disabled:opacity-50"
+          className="border-primary/35 text-primary hover:border-primary hover:bg-primary hover:text-foreground inline-flex min-h-11 items-center justify-center gap-2 border px-5 text-sm tracking-[0.16em] uppercase transition-colors disabled:pointer-events-none disabled:opacity-50"
         >
           <Send size={16} aria-hidden="true" />
           {status === 'submitting' ? 'Enviando' : 'Enviar'}
         </button>
 
-        <p aria-live="polite" className="min-h-5 text-sm text-[#EFDFBB]/55">
+        <p aria-live="polite" className="text-primary/55 min-h-5 text-sm">
           {status === 'success' ? 'Mensagem enviada.' : null}
           {status === 'error' ? 'Nao foi possivel enviar agora.' : null}
         </p>

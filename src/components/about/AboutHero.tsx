@@ -14,16 +14,29 @@ const fadeUp = {
   }),
 }
 
-const areas = ['Residencial', 'Corporativo', 'Interiores', 'Retrofit']
+const DEFAULT_AREAS = ['Residencial', 'Corporativo', 'Interiores', 'Retrofit']
 
-// TODO: replace with SiteContent from DB (key: 'about_text')
 const ABOUT_PARAGRAPHS = [
   'O Studio WT nasce da convicção de que a arquitetura é, antes de tudo, escuta. Cada projeto começa com uma conversa profunda sobre como as pessoas habitam, trabalham e se relacionam com o espaço.',
   'Fundado em São Paulo, o escritório reúne arquitetos e designers com formações complementares, unidos por uma estética que valoriza materiais naturais, luz generosa e planta livre. Trabalhamos em projetos residenciais e corporativos de pequena a grande escala.',
   'Nossa metodologia é colaborativa: o cliente participa ativamente de cada etapa — do conceito à entrega das chaves. Acreditamos que o melhor resultado surge quando quem vai viver o espaço ajuda a imaginá-lo.',
 ]
 
-export function AboutHero() {
+interface AboutHeroProps {
+  areas?: string[]
+  paragraphs?: string[]
+  founded?: string
+  projects?: string
+  team?: string
+}
+
+export function AboutHero({
+  areas = DEFAULT_AREAS,
+  paragraphs = ABOUT_PARAGRAPHS,
+  founded = '2022',
+  projects = '+80',
+  team = '3',
+}: AboutHeroProps) {
   return (
     <section className="min-h-screen px-6 pt-32 pb-24 lg:px-20 lg:pt-40 lg:pb-32">
       <div className="mx-auto max-w-7xl">
@@ -39,7 +52,7 @@ export function AboutHero() {
         </motion.p>
 
         {/* Two-column layout */}
-        <div className="flex flex-col gap-16 lg:flex-row lg:gap-24">
+        <div className="flex flex-col gap-0 overflow-hidden rounded-sm bg-[#EFDFBB]/5 lg:flex-row">
           {/* Left — logo */}
           <motion.div
             variants={fadeUp}
@@ -47,26 +60,26 @@ export function AboutHero() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="lg:sticky lg:top-32 lg:w-2/5 lg:self-start"
+            className="flex flex-col items-center justify-center px-10 py-12 lg:sticky lg:top-32 lg:w-2/5 lg:self-start"
           >
-            <div className="relative h-14 w-64 lg:h-20 lg:w-80">
+            <div className="relative w-full" style={{ aspectRatio: '1.27 / 1' }}>
               <Image
-                src="/logos/logo-white.png"
-                alt="Studio WT Arquitetura e Design"
+                src="/logos/logo-wt-symbol.png"
+                alt="Studio WT"
                 fill
-                sizes="(max-width: 1024px) 256px, 320px"
-                className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
+                sizes="(max-width: 1024px) 80vw, 40vw"
+                className="object-contain object-center [filter:invert(1)_brightness(0.72)_sepia(1)_saturate(0.7)]"
                 priority
               />
             </div>
 
-            <p className="mt-8 text-[11px] tracking-[0.2em] text-[#EFDFBB]/50 uppercase">
-              São Paulo — SP
+            <p className="mt-6 text-[11px] tracking-[0.2em] text-[#EFDFBB]/50 uppercase">
+              Castro - Paraná
             </p>
           </motion.div>
 
           {/* Right — content */}
-          <div className="flex flex-col gap-12 lg:w-3/5">
+          <div className="flex flex-col gap-12 px-10 py-12 lg:w-3/5">
             {/* Areas of practice */}
             <motion.div
               variants={fadeUp}
@@ -92,7 +105,7 @@ export function AboutHero() {
 
             {/* Text paragraphs */}
             <div className="flex flex-col gap-6">
-              {ABOUT_PARAGRAPHS.map((paragraph, i) => (
+              {paragraphs.map((paragraph, i) => (
                 <motion.p
                   key={i}
                   variants={fadeUp}
@@ -117,9 +130,9 @@ export function AboutHero() {
               className="grid grid-cols-3 gap-8 border-t border-[#EFDFBB]/15 pt-10"
             >
               {[
-                { value: '2015', label: 'Fundação' },
-                { value: '+80', label: 'Projetos' },
-                { value: '6', label: 'Profissionais' },
+                { value: founded, label: 'Fundação' },
+                { value: projects, label: 'Projetos' },
+                { value: team, label: 'Profissionais' },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <p className="font-display text-3xl font-light text-[#EFDFBB] lg:text-4xl">

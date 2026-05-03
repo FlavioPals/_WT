@@ -2,11 +2,9 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 const navItems = [
@@ -29,19 +27,7 @@ const itemVariant = {
 }
 
 export function Header() {
-  const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const pathname = usePathname()
-
-  const isHome = pathname === '/'
-  const transparent = isHome && !scrolled
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   function handleNav(href: string) {
     setOpen(false)
@@ -72,7 +58,7 @@ export function Header() {
           <button
             onClick={() => setOpen(true)}
             aria-label="Abrir menu de navegação"
-            className="rounded-sm p-1.5 text-[#EFDFBB]/70 transition-all duration-300 outline-none hover:text-[#EFDFBB] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4"
+            className="cursor-pointer rounded-sm p-1.5 text-[#EFDFBB]/70 transition-all duration-300 outline-none hover:text-[#EFDFBB] focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4"
           >
             <Menu size={22} strokeWidth={1.5} />
           </button>
@@ -83,16 +69,16 @@ export function Header() {
         <SheetContent
           side="right"
           showCloseButton={false}
-          className="bg-primary flex w-72 flex-col gap-0 border-l border-white/10 p-0 sm:w-80"
+          className="bg-foreground border-primary/10 flex w-72 flex-col gap-0 border-l p-0 sm:w-80"
         >
           <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
 
-          <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-8">
-            <span className="text-[11px] tracking-[0.18em] text-[#EFDFBB]/50 uppercase">Menu</span>
+          <div className="border-primary/10 flex h-16 shrink-0 items-center justify-between border-b px-8">
+            <span className="text-primary/50 text-[11px] tracking-[0.18em] uppercase">Menu</span>
             <button
               onClick={() => setOpen(false)}
               aria-label="Fechar menu"
-              className="text-[#EFDFBB]/70 transition-colors outline-none hover:text-[#EFDFBB] focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-4"
+              className="text-primary/70 hover:text-primary focus-visible:ring-primary/50 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-offset-4"
             >
               <X size={18} strokeWidth={1.5} />
             </button>
@@ -110,7 +96,7 @@ export function Header() {
                 {item.href.startsWith('#') ? (
                   <button
                     onClick={() => handleNav(item.href)}
-                    className="font-display w-full py-3 text-left text-[1.65rem] leading-none font-light text-[#EFDFBB]/85 transition-colors outline-none hover:text-[#EFDFBB] focus-visible:text-[#EFDFBB]"
+                    className="font-display text-primary/85 hover:text-primary focus-visible:text-primary w-full py-3 text-left text-[1.65rem] leading-none font-bold transition-colors outline-none"
                   >
                     {item.label}
                   </button>
@@ -118,7 +104,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     onClick={() => handleNav(item.href)}
-                    className="font-display block py-3 text-[1.65rem] leading-none font-light text-[#EFDFBB]/85 transition-colors outline-none hover:text-[#EFDFBB] focus-visible:text-[#EFDFBB]"
+                    className="font-display text-primary/85 hover:text-primary focus-visible:text-primary block py-3 text-[1.65rem] leading-none font-bold transition-colors outline-none"
                   >
                     {item.label}
                   </Link>
@@ -128,7 +114,7 @@ export function Header() {
           </motion.nav>
 
           <div className="mt-auto px-8 pb-10">
-            <p className="text-[11px] tracking-[0.14em] text-white/40 uppercase">
+            <p className="text-primary/40 text-[11px] tracking-[0.14em] uppercase">
               Studio WT · Arquitetura e Design
             </p>
           </div>

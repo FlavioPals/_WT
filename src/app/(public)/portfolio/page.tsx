@@ -68,7 +68,7 @@ export default async function PortfolioPage() {
 
   return (
     <>
-      <JsonLd data={portfolioCollectionJsonLd()} />
+      <JsonLd data={portfolioCollectionJsonLd(projects)} />
       <div className="min-h-screen px-6 pt-32 pb-24 lg:px-20 lg:pt-40 lg:pb-32">
         <div className="mx-auto max-w-7xl">
           <p className="mb-4 text-[11px] tracking-[0.22em] text-[#EFDFBB]/50 uppercase">

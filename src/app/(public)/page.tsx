@@ -1,9 +1,13 @@
 import { HeroCarousel, type HeroSlide } from '@/components/home/HeroCarousel'
 import { ManifestoSection } from '@/components/home/ManifestoSection'
 import { getPublicProjects } from '@/lib/api/projects'
+import { getSiteContent, getSiteContentValue } from '@/lib/api/site'
 
 export default async function HomePage() {
-  const { data: projects } = await getPublicProjects({ featured: true, limit: 4, sort: 'order' })
+  const [{ data: projects }, contents] = await Promise.all([
+    getPublicProjects({ featured: true, limit: 4, sort: 'order' }),
+    getSiteContent({ group: 'home' }),
+  ])
 
   const slides: HeroSlide[] = projects.map((project) => ({
     id: project.id,
@@ -17,7 +21,10 @@ export default async function HomePage() {
   return (
     <>
       <HeroCarousel slides={slides} />
-      <ManifestoSection />
+      <ManifestoSection
+        title={getSiteContentValue(contents, 'home_manifesto_title')}
+        body={getSiteContentValue(contents, 'home_manifesto_body')}
+      />
     </>
   )
 }

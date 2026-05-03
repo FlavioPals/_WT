@@ -9,12 +9,12 @@ export default async function DashboardConteudoPage() {
   const contents = await getAdminSiteContent()
 
   const defaultValues = {
-    manifesto: getSiteContentValue(contents, 'home:manifesto'),
-    about: getSiteContentValue(contents, 'sobre:about'),
-    contactPhone: getSiteContentValue(contents, 'contato:phone'),
-    contactEmail: getSiteContentValue(contents, 'contato:email'),
-    contactCity: getSiteContentValue(contents, 'contato:city'),
-    instagram: getSiteContentValue(contents, 'contato:instagram'),
+    manifesto: getSiteContentValue(contents, 'home_manifesto_body'),
+    about: getSiteContentValue(contents, 'about_intro'),
+    contactPhone: getSiteContentValue(contents, 'contact_phone'),
+    contactEmail: getSiteContentValue(contents, 'contact_email'),
+    contactCity: getSiteContentValue(contents, 'contact_city'),
+    instagram: getSiteContentValue(contents, 'contact_instagram'),
   }
 
   return (

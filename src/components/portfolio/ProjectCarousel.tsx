@@ -48,7 +48,7 @@ export function ProjectCarousel({ images, title, location, year }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.7, ease: EASE }}
+              transition={{ duration: 0.2, ease: EASE }}
               className="relative aspect-[4/3] w-full"
             >
               <Image

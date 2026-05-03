@@ -53,7 +53,7 @@ export function HeroCarousel({ slides }: Props) {
 
   return (
     <section
-      className="w-full px-4 pt-24 pb-6 lg:px-16"
+      className="mx-auto w-full max-w-7xl px-6 pt-24 pb-6 lg:px-10"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label="Destaque de projetos"

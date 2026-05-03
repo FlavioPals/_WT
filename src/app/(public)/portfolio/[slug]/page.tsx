@@ -93,7 +93,6 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
     })),
   ]
 
-  // projectImageGalleryJsonLd expects the old mock shape; pass a compatible object
   const projectForJsonLd = {
     id: project.id,
     slug: project.slug,
@@ -111,7 +110,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
   return (
     <article className="min-h-screen">
-      <JsonLd data={projectImageGalleryJsonLd(projectForJsonLd as never)} />
+      <JsonLd data={projectImageGalleryJsonLd(projectForJsonLd)} />
 
       {/* ── 1. HERO ── */}
       <section className="bg-primary relative min-h-screen overflow-hidden">

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { getSiteContent, getSiteContentValue } from '@/lib/api/site'
 import { ContactForm } from './ContactForm'
 
 function WhatsAppIcon() {
@@ -62,64 +63,81 @@ function MailIcon() {
   )
 }
 
-export function Footer() {
+function phoneHref(phone: string) {
+  const digits = phone.replace(/\D/g, '')
+  return digits ? `tel:+${digits}` : 'tel:+5511999999999'
+}
+
+function whatsappHref(phone: string) {
+  const digits = phone.replace(/\D/g, '')
+  return digits ? `https://wa.me/${digits}` : 'https://wa.me/5511999999999'
+}
+
+export async function Footer() {
+  const contents = await getSiteContent({ group: 'contact' })
+  const phone = getSiteContentValue(contents, 'contact_phone', '+55 (11) 99999-9999')
+  const email = getSiteContentValue(contents, 'contact_email', 'contato@studiowt.com.br')
+  const city = getSiteContentValue(contents, 'contact_city', 'Sao Paulo - SP')
+  const instagram = getSiteContentValue(
+    contents,
+    'contact_instagram',
+    'https://instagram.com/studiowt'
+  )
+
   return (
-    <footer id="contato" className="bg-primary text-white">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-24">
-        <div className="grid gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-start">
-          <div className="flex flex-col gap-10">
+    <footer id="contato" className="bg-foreground text-primary">
+      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-14">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-start">
+          <div className="flex flex-col gap-6">
             <div>
-              <div className="relative mb-6 h-8 w-52">
+              <div className="relative mb-4 h-8 w-52">
                 <Image
-                  src="/logos/logo-white.png"
+                  src="/logos/logo-dark.png"
                   alt="Studio WT Arquitetura e Design"
                   fill
                   sizes="208px"
-                  className="object-contain object-left [filter:brightness(0.72)_sepia(1)_saturate(0.7)]"
+                  className="object-contain object-left"
                 />
               </div>
-              <p className="text-[11px] tracking-[0.2em] text-[#EFDFBB]/40 uppercase">
+              <p className="text-primary/40 text-[11px] tracking-[0.2em] uppercase">
                 Arquitetura e Design
               </p>
             </div>
 
             <div className="flex flex-col gap-5">
-              <div className="flex flex-col gap-1.5 text-sm leading-relaxed text-[#EFDFBB]/60">
-                <p>São Paulo — SP</p>
-                <Link href="tel:+5511999999999" className="transition-colors hover:text-[#EFDFBB]">
-                  +55 (11) 99999-9999
+              <div className="text-primary/60 flex flex-col gap-1.5 text-sm leading-relaxed">
+                <p>{city}</p>
+                <Link href={phoneHref(phone)} className="hover:text-primary transition-colors">
+                  {phone}
                 </Link>
-                <Link
-                  href="mailto:contato@studiowt.com.br"
-                  className="transition-colors hover:text-[#EFDFBB]"
-                >
-                  contato@studiowt.com.br
+                <Link href={`mailto:${email}`} className="hover:text-primary transition-colors">
+                  {email}
                 </Link>
               </div>
 
               <div className="flex gap-5">
                 <Link
-                  href="https://wa.me/5511999999999"
+                  href={whatsappHref(phone)}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
-                  className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
+                  className="text-primary/40 hover:text-primary transition-colors"
                 >
                   <WhatsAppIcon />
                 </Link>
                 <Link
-                  href="https://instagram.com/studiowt"
+                  href={instagram}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
+                  className="text-primary/40 hover:text-primary transition-colors"
                 >
                   <InstagramIcon />
                 </Link>
                 <Link
-                  href="mailto:contato@studiowt.com.br"
+                  href={`mailto:${email}`}
                   aria-label="Enviar e-mail"
-                  className="text-[#EFDFBB]/40 transition-colors hover:text-[#EFDFBB]"
+                  className="text-primary/40 hover:text-primary transition-colors"
                 >
                   <MailIcon />
                 </Link>
@@ -130,8 +148,8 @@ export function Footer() {
           <ContactForm />
         </div>
 
-        <div className="mt-16 flex flex-col gap-2 border-t border-[#EFDFBB]/10 pt-6 text-[11px] tracking-wider text-[#EFDFBB]/25 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} Studio WT. Todos os direitos reservados.</p>
+        <div className="border-primary/10 text-primary/25 mt-10 flex flex-col gap-2 border-t pt-4 text-[11px] tracking-wider sm:flex-row sm:justify-between">
+          <p>&copy; {new Date().getFullYear()} Studio WT. Todos os direitos reservados.</p>
           <p>Arquitetura e Design</p>
         </div>
       </div>

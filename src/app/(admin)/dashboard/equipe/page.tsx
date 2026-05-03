@@ -1,4 +1,3 @@
-import { Plus } from 'lucide-react'
 import { getAdminTeam } from '@/lib/api/team'
 import { TeamManager } from './_components/TeamManager'
 

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { PROJECTS } from '@/lib/projects'
+import { getPublicProjects } from '@/lib/api/projects'
 import { absoluteUrl } from '@/lib/site'
 
 const staticRoutes = [
@@ -9,8 +9,9 @@ const staticRoutes = [
   { path: '/equipe', priority: 0.7 },
 ]
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
+  const { data: projects } = await getPublicProjects({ limit: 100, sort: 'order' })
 
   return [
     ...staticRoutes.map((route) => ({
@@ -19,12 +20,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly' as const,
       priority: route.priority,
     })),
-    ...PROJECTS.map((project) => ({
+    ...projects.map((project) => ({
       url: absoluteUrl(`/portfolio/${project.slug}`),
       lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
-      images: project.images.map((image) => absoluteUrl(image.src)),
+      images: [
+        ...(project.coverImage ? [absoluteUrl(project.coverImage)] : []),
+        ...(project.images?.gallery ?? []).map((image) => absoluteUrl(image.url)),
+      ],
     })),
   ]
 }
