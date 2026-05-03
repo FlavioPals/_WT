@@ -1,220 +1,270 @@
-# Plano: Aba "Usuários" no Dashboard
+# Status: Usuários, Perfil e Visibilidade na Home
 
-## Contexto
+Atualizado em: 2026-05-03
 
-O backend já possui o módulo de usuários **completo** (`/api/v1/admin/users`).
-Todos os endpoints existem e estão protegidos por `requireRole(ADMIN)`.
-O trabalho é **exclusivamente frontend**.
+## Resumo
 
----
+O fluxo principal já foi implementado:
 
-## O que o backend já entrega
-
-| Endpoint                                | Descrição                                                       |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `GET /admin/users`                      | Lista com filtros (q, role, active, deleted, page, limit, sort) |
-| `POST /admin/users`                     | Cria usuário — retorna `{ user, temporaryPassword }`            |
-| `GET /admin/users/:id`                  | Busca por ID                                                    |
-| `PATCH /admin/users/:id`                | Atualiza nome, e-mail, role, active                             |
-| `DELETE /admin/users/:id`               | Soft-delete (seta `active=false`, `deletedAt`, revoga sessões)  |
-| `POST /admin/users/:id/reset-password`  | Gera nova senha temporária e revoga sessões                     |
-| `POST /admin/users/:id/revoke-sessions` | Revoga todos os refresh tokens do usuário                       |
-
-**Roles disponíveis:** `ADMIN` | `ARCHITECT`
-
-**Regra de segurança:** só usuários com `role === 'ADMIN'` acessam esses endpoints.
-O último admin ativo não pode ser deletado nem desativado (o backend protege isso com erro `LAST_ACTIVE_ADMIN`).
+- [x] Aba **Usuários** no dashboard para administradores.
+- [x] CRUD administrativo de usuários usando a API existente.
+- [x] Criação e reset de senha com senha temporária visível uma única vez.
+- [x] Proteção da rota `/dashboard/usuarios` para `ADMIN`.
+- [x] Aba **Meu Perfil** para todos os usuários autenticados.
+- [x] Alteração da própria senha em `/dashboard/perfil`.
+- [x] Ajustes de criação/edição de projetos para erros por campo.
+- [x] Correção da revalidação da home quando um projeto é destacado ou tem capa alterada.
 
 ---
 
-## Passo a passo — Frontend
+## Backend
 
-### [x] PASSO 1 — API client (`src/lib/api/users.ts`)
+### Autenticação
 
-Criar o arquivo com as funções que chamam os endpoints via `adminGet` / `adminMutate`.
+- [x] Endpoint `POST /api/v1/auth/change-password` criado.
+- [x] Endpoint protegido por autenticação.
+- [x] Endpoint protegido por CSRF.
+- [x] Validação de senha atual, nova senha e confirmação.
+- [x] Hash da nova senha antes de salvar.
+- [x] Cliente frontend expõe `changePassword` em `src/lib/api/auth.ts`.
 
-```ts
-// Tipos
-export interface AdminUser {
-  id: string
-  email: string
-  name: string
-  role: 'ADMIN' | 'ARCHITECT'
-  active: boolean
-  lastLoginAt: string | null
-  createdAt: string
-  updatedAt: string
-  deletedAt: string | null
-}
+Arquivos principais:
 
-export interface CreateUserInput {
-  email
-  name
-  role
-  temporaryPassword?
-}
-export interface UpdateUserInput {
-  email?
-  name?
-  role?
-  active?
-}
-```
+- [x] `backend/src/modules/auth/auth.router.ts`
+- [x] `backend/src/modules/auth/auth.controller.ts`
+- [x] `backend/src/modules/auth/auth.service.ts`
+- [x] `backend/src/modules/auth/auth.schemas.ts`
+- [x] `src/lib/api/auth.ts`
 
-Funções:
+### Usuários Admin
 
-- `getAdminUsers(params?)` → lista paginada
-- `getAdminUser(id)` → busca individual
-- `createUser(data)` → retorna `{ user, temporaryPassword }`
-- `updateUser(id, data)` → retorna `AdminUser`
-- `deleteUser(id)` → void
-- `resetUserPassword(id, temporaryPassword?)` → retorna `{ user, temporaryPassword }`
-- `revokeUserSessions(id)` → retorna `{ revokedSessions: number }`
+O backend de usuários já existe e está integrado pelo frontend:
+
+- [x] `GET /admin/users`
+- [x] `POST /admin/users`
+- [x] `GET /admin/users/:id`
+- [x] `PATCH /admin/users/:id`
+- [x] `DELETE /admin/users/:id`
+- [x] `POST /admin/users/:id/reset-password`
+- [x] `POST /admin/users/:id/revoke-sessions`
+- [x] Regra `LAST_ACTIVE_ADMIN` protegendo o último admin ativo.
+- [x] Senha temporária opcional na criação/reset; se vazia, o backend gera uma senha forte.
 
 ---
 
-### [x] PASSO 2 — Server Actions (`src/app/(admin)/dashboard/usuarios/_actions.ts`)
+## Frontend
 
-Arquivo `'use server'` com:
+### API Client de Usuários
 
-```ts
-export interface UserFormState {
-  error?: string
-  fieldErrors?: Record<string, string>
-  success?: string
-  temporaryPassword?: string // exposto após criação ou reset
-}
-```
+- [x] Criado `src/lib/api/users.ts`.
+- [x] Tipos `AdminUser`, `CreateUserInput`, `UpdateUserInput`.
+- [x] `getAdminUsers(params?)`
+- [x] `getAdminUser(id)`
+- [x] `createUser(data)`
+- [x] `updateUser(id, data)`
+- [x] `deleteUser(id)`
+- [x] `resetUserPassword(id, temporaryPassword?)`
+- [x] `revokeUserSessions(id)`
 
-Actions:
+### Server Actions de Usuários
 
-- `createUserAction(_state, formData)` — retorna `{ success, temporaryPassword }`
-- `updateUserAction(id, _state, formData)` — retorna `{ success }` ou `{ fieldErrors }`
-- `deleteUserAction(id)` — soft-delete, void
-- `resetPasswordAction(id, _state, formData)` — retorna `{ success, temporaryPassword }`
-- `revokeSessionsAction(id)` — retorna `{ success }`
+- [x] Criado `src/app/(admin)/dashboard/usuarios/_actions.ts`.
+- [x] `createUserAction`
+- [x] `updateUserAction`
+- [x] `deleteUserAction`
+- [x] `resetPasswordAction`
+- [x] `revokeSessionsAction`
+- [x] `UserFormState` com `error`, `fieldErrors`, `success` e `temporaryPassword`.
+- [x] Tratamento de erros via `extractFormState`.
+- [x] Mensagem amigável para `LAST_ACTIVE_ADMIN`.
+- [x] `revalidatePath('/dashboard/usuarios')` após mutações.
 
-Todos os erros passam por `extractFormState(err)` igual ao padrão dos outros módulos.
-Chamar `revalidatePath('/dashboard/usuarios')` após mutações.
+### Página de Usuários
 
----
+- [x] Criada rota `/dashboard/usuarios`.
+- [x] Server Component carrega `getAuthUser()`.
+- [x] Server Component bloqueia acesso de não-admin com redirect para `/dashboard`.
+- [x] Server Component carrega `getAdminUsers()`.
+- [x] Dados enviados para `UserManager`.
 
-### [x] PASSO 3 — Página principal (`src/app/(admin)/dashboard/usuarios/page.tsx`)
+Arquivos:
 
-Server Component. Faz `getAdminUsers()` e passa para o `UserManager` client component.
+- [x] `src/app/(admin)/dashboard/usuarios/page.tsx`
+- [x] `src/app/(admin)/dashboard/usuarios/_components/UserManager.tsx`
+- [x] `src/app/(admin)/dashboard/usuarios/_components/TempPasswordDisplay.tsx`
 
-Verificar se o usuário logado tem `role === 'ADMIN'`; caso contrário, redirecionar (`notFound()` ou `redirect('/dashboard')`).
+### Componente `UserManager`
 
----
+- [x] Lista de usuários.
+- [x] Nome e e-mail.
+- [x] Badge de role.
+- [x] Badge de status.
+- [x] Último login.
+- [x] Botão editar.
+- [x] Botão resetar senha.
+- [x] Botão revogar sessões.
+- [x] Botão excluir.
+- [x] Bloqueio visual para impedir ação destrutiva no próprio usuário.
+- [x] Formulário de criação.
+- [x] Formulário de edição.
+- [x] Campo de senha inicial opcional na criação.
+- [x] Campo de confirmação de senha inicial.
+- [x] Campo de nova senha opcional na edição de outro usuário.
+- [x] Campo de confirmação da nova senha.
+- [x] Exibição de senha temporária após criação/reset.
+- [x] Botão de copiar senha temporária.
+- [x] Botão para ocultar senha temporária.
 
-### [x] PASSO 4 — Componente principal (`_components/UserManager.tsx`)
+### Meu Perfil
 
-Client Component. Layout em duas colunas (igual ao `TeamManager`):
+- [x] Criada rota `/dashboard/perfil`.
+- [x] Página exibe dados da conta autenticada.
+- [x] Formulário para alterar a própria senha.
+- [x] Validação de senha atual.
+- [x] Validação de nova senha e confirmação.
+- [x] Feedback de sucesso/erro no formulário.
 
-- Coluna esquerda: tabela/lista de usuários
-- Coluna direita: painel de criação/edição
+Arquivos:
 
-**Lista de usuários** (coluna esquerda):
+- [x] `src/app/(admin)/dashboard/perfil/page.tsx`
+- [x] `src/app/(admin)/dashboard/perfil/_actions.ts`
+- [x] `src/app/(admin)/dashboard/perfil/_components/ProfilePasswordForm.tsx`
 
-- Nome + e-mail
-- Badge de role (`ADMIN` / `ARCHITECT`) com cor diferente
-- Badge de status (`Ativo` / `Inativo`)
-- Data do último login (ou "Nunca")
-- Botões de ação: editar, resetar senha, revogar sessões, excluir
-- Usuário logado não pode deletar/desativar a si mesmo (desabilitar botão)
+### Navegação e Layout
 
-**Painel de criação/edição** (coluna direita):
+- [x] `AdminNav` recebe `role`.
+- [x] Item **Meu Perfil** aparece para todos os usuários autenticados.
+- [x] Item **Usuários** aparece somente para `ADMIN`.
+- [x] `dashboard/layout.tsx` passa `user.role` para `AdminNav`.
 
-- Campos: Nome _, E-mail _, Role (select), Ativo (checkbox — só no modo edição)
-- Estado `Novo usuário` / `Editar usuário`
-- Botão "Criar usuário" / "Salvar alterações"
+Arquivos:
 
-**Modal/inline de senha temporária:**
-
-- Após criar ou resetar senha, exibir a senha gerada com botão "Copiar"
-- Avisar que a senha é mostrada **uma única vez**
-- Campo de texto com a senha + botão de copiar para área de transferência
-
----
-
-### [x] PASSO 5 — Componente de senha temporária (`_components/TempPasswordDisplay.tsx`)
-
-```tsx
-interface Props {
-  password: string
-  onDismiss: () => void
-}
-```
-
-- Caixa destacada (borda amarela/âmbar) com aviso "Salve esta senha agora"
-- Input readonly com a senha + botão de copiar (usa `navigator.clipboard.writeText`)
-- Botão "Entendido" para fechar
-
----
-
-### [x] PASSO 6 — Navegação (`src/components/admin/AdminNav.tsx`)
-
-Adicionar item:
-
-```ts
-{ label: 'Usuários', href: '/dashboard/usuarios', icon: UserCog }
-```
-
-**Atenção:** este item deve ser renderizado **somente para usuários com `role === 'ADMIN'`**.
-Para isso, o `AdminNav` precisa receber o `role` do usuário via props (passado pelo `layout.tsx` do dashboard que já busca `getAuthUser()`).
-
----
-
-### [x] PASSO 7 — Proteção de rota no layout
-
-Em `src/app/(admin)/dashboard/layout.tsx`, já existe `getAuthUser()`.
-Passar `user.role` para `AdminNav` e para o layout, de modo que:
-
-- A aba "Usuários" só aparece no menu para `ADMIN`
-- A página `/dashboard/usuarios` redireciona para `/dashboard` se o role não for `ADMIN`
+- [x] `src/components/admin/AdminNav.tsx`
+- [x] `src/app/(admin)/dashboard/layout.tsx`
 
 ---
 
-### [x] AJUSTE SOLICITADO — Meu Perfil e senha própria
+## Projetos e Home
 
-- Criada página `/dashboard/perfil` no estilo da referência enviada, com informações da conta e formulário de alteração de senha.
-- Adicionado endpoint autenticado `POST /api/v1/auth/change-password`, protegido por CSRF, para o próprio usuário alterar a senha informando senha atual, nova senha e confirmação.
-- Adicionado item "Meu Perfil" no menu do dashboard para todos os usuários autenticados.
-- Cadastro de usuário atualizado para permitir definir senha inicial e confirmar senha; se ficar vazio, o backend continua gerando uma senha forte automaticamente.
-- Corrigido layout da lista de usuários para evitar scroll horizontal e contorno quebrado ao editar o próprio usuário.
-- Edição de usuário atualizada para permitir que admins definam manualmente uma nova senha e confirmação para outros usuários no painel lateral; a própria senha é alterada somente em `/dashboard/perfil`.
-- Criação de projeto ajustada para exibir erros de validação por campo em vez de "Invalid input" genérico; payload limpa campos opcionais vazios e redireciona para a edição do projeto criado.
+### Criação/Edição de Projetos
 
----
+- [x] Criação de projeto trata erros por campo.
+- [x] Campos opcionais vazios são limpos antes do envio.
+- [x] Projeto criado redireciona para a tela de edição.
+- [x] Mensagens de validação ficam mais amigáveis.
 
-## Ordem de implementação recomendada
+Arquivos:
 
-```
-1. src/lib/api/users.ts                          — tipos e funções de API
-2. src/app/(admin)/dashboard/usuarios/_actions.ts — server actions
-3. src/app/(admin)/dashboard/usuarios/page.tsx    — página (server component)
-4. _components/TempPasswordDisplay.tsx            — componente de senha
-5. _components/UserManager.tsx                    — componente principal
-6. src/components/admin/AdminNav.tsx              — adicionar aba
-7. src/app/(admin)/dashboard/layout.tsx           — passar role para AdminNav
-```
+- [x] `src/app/(admin)/dashboard/projetos/_actions.ts`
+- [x] `src/app/(admin)/dashboard/projetos/_components/ProjectCreateForm.tsx`
+- [x] `backend/src/modules/projects/projects.schemas.ts`
 
----
+### Visibilidade na Home
 
-## Casos de borda a considerar
+- [x] Home busca projetos com `featured=true`.
+- [x] Home usa `coverImage` como imagem principal do destaque.
+- [x] Projeto precisa estar `PUBLISHED` para aparecer publicamente.
+- [x] Salvar projeto revalida `/`.
+- [x] Publicar/despublicar/excluir projeto revalida `/`.
+- [x] Enviar/remover/reordenar imagem revalida `/`.
+- [x] Helper global de revalidação de projeto também revalida `/`.
 
-| Situação                                                   | Comportamento esperado                                            |
-| ---------------------------------------------------------- | ----------------------------------------------------------------- |
-| Tentar deletar o último admin ativo                        | Backend retorna `LAST_ACTIVE_ADMIN` → exibir mensagem clara       |
-| Tentar desativar o próprio usuário                         | Desabilitar o botão no front (comparar ID com `getAuthUser().id`) |
-| Senha temporária gerada                                    | Exibir `TempPasswordDisplay` — mostrada **uma única vez**         |
-| Role insuficiente (ARCHITECT acessa `/dashboard/usuarios`) | Redirecionar no `page.tsx` antes de renderizar qualquer dado      |
-| E-mail duplicado                                           | Backend retorna `CONFLICT` → exibir erro no campo e-mail          |
+Arquivos:
+
+- [x] `src/app/(public)/page.tsx`
+- [x] `src/app/(admin)/dashboard/projetos/_actions.ts`
+- [x] `src/lib/project-revalidation.ts`
 
 ---
 
-## O que NÃO precisa ser feito
+## Casos de Borda
 
-- **Backend:** módulo completo já existe e está em produção
-- **Migrations:** schema já tem `active`, `deletedAt`, `lastLoginAt`, `RefreshToken`
-- **Auth/CSRF:** já tratado pelo `adminMutate` padrão
+- [x] Tentar deletar/desativar o último admin ativo retorna mensagem clara.
+- [x] Usuário não-admin não acessa `/dashboard/usuarios`.
+- [x] Aba **Usuários** não aparece para não-admin.
+- [x] Senha temporária aparece após criar/resetar.
+- [x] Senha temporária pode ser copiada.
+- [x] Usuário atual não deve ser alvo de ações destrutivas no painel de usuários.
+- [x] E-mail duplicado é tratado como erro de campo.
+- [x] Checkbox **Destaque na home** só afeta a home depois de salvar o projeto.
+- [x] Projeto destacado só aparece na home se também estiver publicado e tiver capa.
+
+---
+
+## Falta Fazer
+
+### Obrigatório antes de considerar 100% fechado
+
+- [x] Fazer QA manual/automatizado no navegador/SSR com um usuário `ADMIN`:
+  - abrir `/dashboard/usuarios`;
+  - criar usuário com senha automática;
+  - criar usuário com senha manual;
+  - editar nome/e-mail/role/status;
+  - resetar senha;
+  - revogar sessões;
+  - excluir usuário.
+- [x] Fazer QA manual/automatizado no navegador/SSR com um usuário `ARCHITECT`:
+  - confirmar que a aba **Usuários** não aparece;
+  - tentar acessar `/dashboard/usuarios` diretamente;
+  - confirmar redirect para `/dashboard`.
+- [x] Fazer QA manual/automatizado em `/dashboard/perfil`:
+  - alterar senha com senha atual correta;
+  - testar erro com senha atual incorreta;
+  - testar erro com confirmação divergente.
+- [x] Testar no navegador/API o fluxo de projeto destacado:
+  - marcar **Destaque na home**;
+  - salvar alterações;
+  - publicar o projeto;
+  - trocar foto de capa;
+  - confirmar que a imagem aparece na home.
+
+### Recomendado
+
+- [x] Adicionar testes automatizados para `change-password`.
+- [x] Executar QA automatizado dos fluxos cobertos pelas server actions de usuários.
+- [x] Executar testes de UI/SSR para permissões `ADMIN` versus `ARCHITECT`.
+- [x] Revisar se `public/uploads/` deve mesmo ser versionado no Git ou se deve virar armazenamento externo/ignorado.
+- [x] Ignorar `.codex-logs/`, que é apenas log local de execução.
+- [x] Rodar `npm run lint` e `npm run typecheck` novamente antes do próximo deploy.
+
+### Resultado da execução em 2026-05-03
+
+- [x] QA local executado com 28 checks passando:
+  - usuário `ADMIN` abriu `/dashboard/usuarios`;
+  - usuário `ADMIN` criou usuário com senha automática;
+  - usuário `ADMIN` criou usuário com senha manual;
+  - usuário `ADMIN` editou nome/e-mail/role/status;
+  - usuário `ADMIN` resetou senha;
+  - usuário `ADMIN` revogou sessões;
+  - usuário `ADMIN` excluiu usuário;
+  - usuário `ARCHITECT` abriu `/dashboard`;
+  - usuário `ARCHITECT` não viu a aba **Usuários**;
+  - usuário `ARCHITECT` foi redirecionado ao acessar `/dashboard/usuarios`;
+  - `/dashboard/perfil` rejeitou senha atual incorreta;
+  - `/dashboard/perfil` rejeitou confirmação divergente;
+  - `/dashboard/perfil` alterou senha com senha atual correta;
+  - home renderizou capa destacada;
+  - `featured=false` removeu projeto da lista pública de destaque;
+  - `featured=true` recolocou projeto na lista pública de destaque;
+  - troca de capa refletiu na API pública;
+  - capa original foi restaurada.
+- [x] Testes backend executados com `npm run test:run`: 64 testes passando.
+- [x] Validações executadas:
+  - `npm run lint` na raiz;
+  - `npm run typecheck` na raiz;
+  - `npm run lint` no backend;
+  - `npm run typecheck` no backend;
+  - `npx prettier --check idea.md backend/src/tests/unit/auth.service.test.ts`.
+- [x] Decisão sobre `public/uploads/`: manter versionado por enquanto, pois o ambiente local usa fallback de upload em disco e o banco possui projetos/equipe referenciando esses arquivos.
+- [x] `.codex-logs/` adicionado ao `.gitignore`. Os arquivos locais podem permanecer enquanto front/backend estiverem rodando porque os processos mantêm os logs abertos, mas não aparecem mais no `git status`.
+
+### Pendências restantes
+
+- [x] Nenhuma pendência obrigatória restante.
+- [x] Nenhuma pendência recomendada restante nesta checklist.
+
+### Sem pendência de implementação conhecida
+
+- [x] Não há pendência de código conhecida para a aba **Usuários**.
+- [x] Não há pendência de código conhecida para **Meu Perfil**.
+- [x] Não há pendência de código conhecida para a correção de **Destaque na home**.

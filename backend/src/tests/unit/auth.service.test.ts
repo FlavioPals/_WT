@@ -25,6 +25,10 @@ vi.mock('../../lib/prisma', () => ({
   },
 }))
 
+vi.mock('../../lib/audit', () => ({
+  audit: vi.fn(),
+}))
+
 vi.mock('argon2', () => ({
   default: {
     verify: vi.fn(),
@@ -35,9 +39,10 @@ vi.mock('argon2', () => ({
 // ─── Imports after mocks ──────────────────────────────────────────────────────
 
 import argon2 from 'argon2'
+import { audit } from '../../lib/audit'
 import { prisma } from '../../lib/prisma'
 import { AppError } from '../../middlewares/error.middleware'
-import { login, logout, refreshTokens } from '../../modules/auth/auth.service'
+import { changeOwnPassword, login, logout, refreshTokens } from '../../modules/auth/auth.service'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -161,6 +166,64 @@ describe('auth.service', () => {
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({ data: { revokedAt: expect.any(Date) } })
       )
+    })
+  })
+
+  // â”€ changeOwnPassword â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  describe('changeOwnPassword()', () => {
+    it('updates the password hash when the current password is valid', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as never)
+      vi.mocked(argon2.verify).mockResolvedValue(true)
+      vi.mocked(argon2.hash).mockResolvedValue('new-hashed-password')
+      vi.mocked(prisma.user.update).mockResolvedValue({
+        ...mockUser,
+        password: 'new-hashed-password',
+      } as never)
+
+      await changeOwnPassword('user-1', 'current-password', 'NewPassword123!')
+
+      expect(argon2.verify).toHaveBeenCalledWith('hashed-password', 'current-password')
+      expect(argon2.hash).toHaveBeenCalledWith('NewPassword123!')
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { password: 'new-hashed-password' },
+      })
+      expect(audit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorId: 'user-1',
+          action: 'auth.password.change',
+          entity: 'User',
+          entityId: 'user-1',
+        })
+      )
+    })
+
+    it('throws INVALID_CURRENT_PASSWORD without updating when the current password is wrong', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(mockUser as never)
+      vi.mocked(argon2.verify).mockResolvedValue(false)
+
+      await expect(
+        changeOwnPassword('user-1', 'wrong-password', 'NewPassword123!')
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        code: 'INVALID_CURRENT_PASSWORD',
+      })
+      expect(argon2.hash).not.toHaveBeenCalled()
+      expect(prisma.user.update).not.toHaveBeenCalled()
+    })
+
+    it('throws NOT_FOUND when the active user cannot be found', async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null)
+
+      await expect(
+        changeOwnPassword('missing-user', 'current-password', 'NewPassword123!')
+      ).rejects.toMatchObject({
+        statusCode: 404,
+        code: 'NOT_FOUND',
+      })
+      expect(argon2.verify).not.toHaveBeenCalled()
+      expect(prisma.user.update).not.toHaveBeenCalled()
     })
   })
 })

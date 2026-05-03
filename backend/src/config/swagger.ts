@@ -511,6 +511,45 @@ export const swaggerSpec = {
       },
     },
 
+    '/ready': {
+      get: {
+        tags: ['Health'],
+        summary: 'Verifica se a API está pronta (com banco)',
+        description:
+          'Executa uma query simples no banco para garantir que a API consegue atender requisições. ' +
+          'Provedores de deploy podem usar este endpoint como readiness probe.',
+        operationId: 'getReady',
+        responses: {
+          200: {
+            description: 'API pronta — banco respondendo.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        status: { type: 'string', example: 'ready' },
+                        database: { type: 'string', example: 'ok' },
+                      },
+                    },
+                    meta: { $ref: '#/components/schemas/Meta' },
+                  },
+                },
+              },
+            },
+          },
+          503: {
+            description: 'Banco indisponível.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ErrorBody' } },
+            },
+          },
+        },
+      },
+    },
+
     // ── Auth ──────────────────────────────────────────────────────────────────
     '/auth/csrf': {
       get: {
