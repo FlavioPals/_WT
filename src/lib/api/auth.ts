@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { cookies } from 'next/headers'
-import { ACCESS_TOKEN_COOKIE, API_BASE, REFRESH_TOKEN_COOKIE } from '@/lib/api-client'
+import { ACCESS_TOKEN_COOKIE, API_BASE, REFRESH_TOKEN_COOKIE, adminMutate } from '@/lib/api-client'
 
 export interface AuthUser {
   id: string
@@ -142,4 +142,12 @@ export async function getAuthUser(): Promise<AuthUser | null> {
   } catch {
     return null
   }
+}
+
+export async function changeOwnPassword(data: {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}): Promise<void> {
+  await adminMutate('POST', '/auth/change-password', data)
 }

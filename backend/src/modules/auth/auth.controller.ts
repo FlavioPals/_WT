@@ -3,7 +3,7 @@ import { env } from '../../config/env'
 import { asyncHandler } from '../../lib/async-handler'
 import { generateCsrfToken } from '../../lib/csrf'
 import { AppError } from '../../middlewares/error.middleware'
-import type { LoginInput } from './auth.schemas'
+import type { ChangeOwnPasswordInput, LoginInput } from './auth.schemas'
 import * as authService from './auth.service'
 
 const CSRF_COOKIE = 'csrf_token'
@@ -61,6 +61,12 @@ export const logoutAll = asyncHandler(async (req, res) => {
 
 export const me = asyncHandler(async (req, res) => {
   res.json({ data: { user: req.user }, meta: meta(req) })
+})
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body as ChangeOwnPasswordInput
+  await authService.changeOwnPassword(req.user!.id, currentPassword, newPassword)
+  res.json({ data: { message: 'Password changed.' }, meta: meta(req) })
 })
 
 export const getCsrf = asyncHandler(async (req, res) => {

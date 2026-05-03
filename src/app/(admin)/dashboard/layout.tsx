@@ -47,7 +47,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
 
         <div className="flex flex-1 flex-col justify-between px-5 py-6">
-          <AdminNav />
+          <AdminNav role={user.role} />
 
           <div className="grid gap-1">
             <Link
@@ -99,7 +99,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </header>
 
         <div className="border-muted bg-surface border-b px-6 py-4 lg:hidden">
-          <AdminNav />
+          <AdminNav role={user.role} />
         </div>
 
         <main className="px-6 py-8 lg:px-10 lg:py-10">{children}</main>

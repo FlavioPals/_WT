@@ -12,7 +12,7 @@ export const createProjectSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.').max(160),
   slug: slugField,
   description: z.string().min(1, 'Description is required.'),
-  concept: z.string().optional(),
+  concept: z.string().optional().nullable(),
   year: z
     .number()
     .int()

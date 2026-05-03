@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import argon2 from 'argon2'
 import { JWTPayload, SignJWT, jwtVerify } from 'jose'
 import { env } from '../../config/env'
+import { audit } from '../../lib/audit'
 import { prisma } from '../../lib/prisma'
 import { AppError } from '../../middlewares/error.middleware'
 
@@ -145,5 +146,35 @@ export async function logoutAll(userId: string): Promise<void> {
   await prisma.refreshToken.updateMany({
     where: { userId, revokedAt: null },
     data: { revokedAt: new Date() },
+  })
+}
+
+export async function changeOwnPassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const user = await prisma.user.findFirst({
+    where: { id: userId, active: true, deletedAt: null },
+  })
+
+  if (!user) throw new AppError(404, 'NOT_FOUND', 'User not found.')
+
+  const validCurrentPassword = await argon2.verify(user.password, currentPassword)
+  if (!validCurrentPassword) {
+    throw new AppError(401, 'INVALID_CURRENT_PASSWORD', 'Current password is incorrect.')
+  }
+
+  const hashedPassword = await argon2.hash(newPassword)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  })
+
+  await audit({
+    actorId: userId,
+    action: 'auth.password.change',
+    entity: 'User',
+    entityId: userId,
   })
 }

@@ -4,7 +4,7 @@ import { authenticate } from '../../middlewares/authenticate.middleware'
 import { csrf } from '../../middlewares/csrf.middleware'
 import { validate } from '../../middlewares/validate.middleware'
 import * as authController from './auth.controller'
-import { loginSchema } from './auth.schemas'
+import { changeOwnPasswordSchema, loginSchema } from './auth.schemas'
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -24,3 +24,10 @@ authRouter.post('/refresh', authController.refresh)
 authRouter.post('/logout', authController.logout)
 authRouter.post('/logout-all', authenticate, csrf, authController.logoutAll)
 authRouter.get('/me', authenticate, authController.me)
+authRouter.post(
+  '/change-password',
+  authenticate,
+  csrf,
+  validate(changeOwnPasswordSchema),
+  authController.changePassword
+)

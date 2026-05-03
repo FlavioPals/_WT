@@ -8,6 +8,16 @@ const CATEGORIES = ['Residencial', 'Corporativo', 'Interiores', 'Retrofit']
 
 const initialState: ProjectFormState = {}
 
+function fieldError(state: ProjectFormState, field: string) {
+  return state.fieldErrors?.[field]
+}
+
+function inputClass(hasError: boolean) {
+  return `border bg-white px-3 transition-colors outline-none ${
+    hasError ? 'border-red-400 focus:border-red-500' : 'border-muted focus:border-primary'
+  }`
+}
+
 export function ProjectCreateForm() {
   const [state, formAction, pending] = useActionState(createProjectAction, initialState)
 
@@ -17,13 +27,19 @@ export function ProjectCreateForm() {
 
       <form action={formAction} className="grid gap-4">
         <label className="grid gap-2 text-sm">
-          Título
+          Titulo *
           <input
             name="title"
             required
-            className="border-muted focus:border-primary h-10 border bg-white px-3 transition-colors outline-none"
+            aria-describedby={fieldError(state, 'title') ? 'project-title-error' : undefined}
+            className={`h-10 ${inputClass(!!fieldError(state, 'title'))}`}
             placeholder="Nome do projeto"
           />
+          {fieldError(state, 'title') && (
+            <p id="project-title-error" className="text-xs text-red-600" role="alert">
+              {fieldError(state, 'title')}
+            </p>
+          )}
         </label>
 
         <div className="grid grid-cols-2 gap-3">
@@ -32,24 +48,38 @@ export function ProjectCreateForm() {
             <input
               name="year"
               type="number"
-              className="border-muted focus:border-primary h-10 border bg-white px-3 transition-colors outline-none"
+              aria-describedby={fieldError(state, 'year') ? 'project-year-error' : undefined}
+              className={`h-10 ${inputClass(!!fieldError(state, 'year'))}`}
               placeholder={String(new Date().getFullYear())}
             />
+            {fieldError(state, 'year') && (
+              <p id="project-year-error" className="text-xs text-red-600" role="alert">
+                {fieldError(state, 'year')}
+              </p>
+            )}
           </label>
 
           <label className="grid gap-2 text-sm">
             Categoria
             <select
               name="category"
-              className="border-muted focus:border-primary h-10 border bg-white px-3 transition-colors outline-none"
+              aria-describedby={
+                fieldError(state, 'category') ? 'project-category-error' : undefined
+              }
+              className={`h-10 ${inputClass(!!fieldError(state, 'category'))}`}
             >
-              <option value="">— selecione —</option>
+              <option value="">-- selecione --</option>
               {CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>
               ))}
             </select>
+            {fieldError(state, 'category') && (
+              <p id="project-category-error" className="text-xs text-red-600" role="alert">
+                {fieldError(state, 'category')}
+              </p>
+            )}
           </label>
         </div>
 
@@ -57,20 +87,34 @@ export function ProjectCreateForm() {
           Local
           <input
             name="location"
-            className="border-muted focus:border-primary h-10 border bg-white px-3 transition-colors outline-none"
+            aria-describedby={fieldError(state, 'location') ? 'project-location-error' : undefined}
+            className={`h-10 ${inputClass(!!fieldError(state, 'location'))}`}
             placeholder="Cidade, Estado"
           />
+          {fieldError(state, 'location') && (
+            <p id="project-location-error" className="text-xs text-red-600" role="alert">
+              {fieldError(state, 'location')}
+            </p>
+          )}
         </label>
 
         <label className="grid gap-2 text-sm">
-          Descrição
+          Descricao *
           <textarea
             name="description"
             required
             rows={6}
-            className="border-muted focus:border-primary resize-none border bg-white px-3 py-3 transition-colors outline-none"
-            placeholder="Descrição do projeto..."
+            aria-describedby={
+              fieldError(state, 'description') ? 'project-description-error' : undefined
+            }
+            className={`resize-none py-3 ${inputClass(!!fieldError(state, 'description'))}`}
+            placeholder="Descricao do projeto..."
           />
+          {fieldError(state, 'description') && (
+            <p id="project-description-error" className="text-xs text-red-600" role="alert">
+              {fieldError(state, 'description')}
+            </p>
+          )}
         </label>
 
         <label className="text-primary/70 flex items-center gap-3 text-sm">
@@ -84,6 +128,15 @@ export function ProjectCreateForm() {
             role="alert"
           >
             {state.error}
+          </p>
+        )}
+
+        {state.fieldErrors?.form && (
+          <p
+            className="border-accent/30 bg-accent/5 text-accent border px-3 py-2 text-sm"
+            role="alert"
+          >
+            {state.fieldErrors.form}
           </p>
         )}
 

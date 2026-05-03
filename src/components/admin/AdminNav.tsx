@@ -2,21 +2,30 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, FolderKanban, Users } from 'lucide-react'
+import { FileText, FolderKanban, UserCog, UserRound, Users } from 'lucide-react'
+import type { AuthUser } from '@/lib/api/auth'
 import { cn } from '@/lib/utils'
 
 const navItems = [
+  { label: 'Meu Perfil', href: '/dashboard/perfil', icon: UserRound },
   { label: 'Projetos', href: '/dashboard/projetos', icon: FolderKanban },
   { label: 'Equipe', href: '/dashboard/equipe', icon: Users },
   { label: 'Sobre', href: '/dashboard/conteudo', icon: FileText },
 ]
 
-export function AdminNav() {
+const adminOnlyNavItems = [{ label: 'Usuarios', href: '/dashboard/usuarios', icon: UserCog }]
+
+interface AdminNavProps {
+  role: AuthUser['role']
+}
+
+export function AdminNav({ role }: AdminNavProps) {
   const pathname = usePathname()
+  const items = role === 'ADMIN' ? [...navItems, ...adminOnlyNavItems] : navItems
 
   return (
-    <nav className="flex flex-col gap-1" aria-label="Navegação do dashboard">
-      {navItems.map((item) => {
+    <nav className="flex flex-col gap-1" aria-label="Navegacao do dashboard">
+      {items.map((item) => {
         const Icon = item.icon
         const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
 
